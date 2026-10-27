@@ -3,62 +3,44 @@
 	import { page } from '$app/state';
 	import { inView } from 'motion';
 	import NumberFlow from '@number-flow/svelte';
+	import AppReveal from './AppReveal.svelte';
 	import GoogleButton from './GoogleButton.svelte';
-	import PhoneTour from './PhoneTour.svelte';
+	import TownFlight, { SCENES } from './TownFlight.svelte';
 	import Wordmark from './Wordmark.svelte';
 	import { skipStaleAppPage } from '../app-visit';
-	import { cartTotals, priceOf } from './store-prices';
+	import { cartTotals } from './store-prices';
 
 	let { data } = $props();
 
-	const DESCRIPTION = 'Billie reads your grocery receipts and keeps every price you paid, store by store. See what went up and where the same thing costs less.';
+	const TITLE = 'Billie · Grocery receipt app that finds the cheaper store';
+	const DESCRIPTION = 'Billie is a free app for your grocery receipts. Snap a receipt and it remembers every price you paid, store by store, so you see where things cost less, when prices go up, and when food you bought is recalled.';
 	const home = `${page.url.origin}/`;
 
-	// Every price here is a sourced 2026 shelf price; every sum and gap is worked out below, in cents.
-	const PACK_LB = 3;
-	const pack = (store: string) => Math.round(priceOf(store, 'chicken')! * PACK_LB * 100);
-	const slips = [
-		{ store: 'Wegmans', printed: 'WEG BNLS SKNLS CHKN BRST', perLb: priceOf('Wegmans', 'chicken')!, cents: pack('Wegmans') },
-		{ store: 'Target', printed: 'GG BNLS CHKN BRST', perLb: priceOf('Target', 'chicken')!, cents: pack('Target') }
-	];
-	const gap = slips[1].cents - slips[0].cents;
-
-
+	// every price here is a sourced 2026 shelf price; every sum and gap is worked out below, in cents
 	const carts = cartTotals();
 	const weekly = carts.at(-1)!.cents - carts[0].cents;
 	const yearlyDollars = Math.round((weekly * 52) / 100);
 
-
 	// the real numbers show by default; they only start from zero once the page can roll them in
-	let gapShown = $state(gap);
 	let cartShown = $state(carts.map((c) => c.cents));
+	// Number Flow renders differently on the server, so the plain price is drawn until the page is live
+	let live = $state(false);
+	let cartList: HTMLElement;
 
 	const promises = ['Your card number is never kept.', 'The photo is deleted once it’s read.', 'Nothing is sold or shared. Ever.', 'Store map: off until you turn it on. ZIP code only, never your address.'];
 
-	// Number Flow renders differently on the server, so the plain price is drawn until the page is live
-	let live = $state(false);
-	let gapMark = $state<HTMLElement>();
-	let cartList: HTMLElement;
+	let scene = $state(0);
+	let flying = $state(true);
 
 	onMount(skipStaleAppPage);
 
 	onMount(() => {
 		live = true;
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-		gapShown = 0;
 		cartShown = carts.map(() => 0);
-		const stopGap = inView(gapMark!, () => {
-			gapShown = gap;
-		}, { amount: 0.8 });
-		const stopCart = inView(cartList, () => {
+		return inView(cartList, () => {
 			cartShown = carts.map((c) => c.cents);
 		}, { amount: 0.5 });
-
-		return () => {
-			stopGap();
-			stopCart();
-		};
 	});
 
 	const dollars = (cents: number) => cents / 100;
@@ -70,15 +52,15 @@
 <svelte:window onpageshow={(e) => e.persisted && location.reload()} />
 
 <svelte:head>
-	<title>Billie · Grocery prices from your own receipts</title>
+	<title>{TITLE}</title>
 	<meta name="description" content={DESCRIPTION} />
 	<link rel="canonical" href={home} />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="Billie" />
-	<meta property="og:title" content="Billie · Grocery prices from your own receipts" />
+	<meta property="og:title" content={TITLE} />
 	<meta property="og:description" content={DESCRIPTION} />
 	<meta property="og:url" content={home} />
-	<meta property="og:image" content="{home}images/hero-receipt-1024.webp" />
+	<meta property="og:image" content="{home}images/app-home-laptop.jpg" />
 	<meta name="twitter:card" content="summary_large_image" />
 	{@html `<script type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',
@@ -95,71 +77,21 @@
 <header class="bar">
 	<div class="site-top">
 		<Wordmark />
+		<!-- the town's scenes, up in the bar like chapters; gone once the town scrolls away -->
+		<ol class="scenes" class:gone={!flying} aria-label="Scenes">
+			{#each SCENES as s, i (s.id)}
+				<li><a href="#scene-{s.id}" class:on={scene === i} aria-current={scene === i ? 'step' : undefined}>{s.label}</a></li>
+			{/each}
+		</ol>
 		<nav>
-			<a href="/demo">Try the demo</a>
+			<a class="wide-only" href="/demo">Try the demo</a>
 			<a href="/privacy">Privacy</a>
 		</nav>
 	</div>
 </header>
 
 <main>
-	<section class="hero">
-		<h1>Know what you paid <span class="hl">last time.</span></h1>
-		<p class="lead">Snap any grocery receipt. Billie remembers every price, at every store you shop.</p>
-		{#if data.signInFailed}<p class="failed" role="alert">Sign-in didn’t go through. Try again.</p>{/if}
-		<div class="actions">
-			<GoogleButton />
-			<a class="quiet" href="/demo">Try the demo</a>
-		</div>
-		<figure class="photo">
-			<img
-				src="/images/hero-receipt-2048.webp"
-				srcset="/images/hero-receipt-1024.webp 1024w, /images/hero-receipt-2048.webp 2048w"
-				sizes="(min-width: 1200px) 1120px, 92vw"
-				width="2048"
-				height="1020"
-				alt="A hand holding a long grocery receipt in a bright produce aisle"
-				fetchpriority="high"
-			/>
-		</figure>
-	</section>
-
-	<section class="problem">
-		<h2>Same chicken. <span class="dear">{money.format(dollars(gap))} apart.</span></h2>
-		<p class="sub">
-			Three pounds of boneless chicken breast: {money.format(dollars(slips[0].cents))} at Wegmans, {money.format(
-				dollars(slips[1].cents)
-			)} at Target. You’d never know. The receipts end up in different drawers.
-		</p>
-		<div class="counter">
-			<img
-				src="/images/receipts-apart-2048.webp"
-				srcset="/images/receipts-apart-1024.webp 1024w, /images/receipts-apart-2048.webp 2048w"
-				sizes="(min-width: 1200px) 1120px, 92vw"
-				width="2048"
-				height="807"
-				alt="Two crumpled grocery receipts lying apart on a kitchen counter"
-				loading="lazy"
-			/>
-			<div class="slips">
-				{#each slips as slip, i (slip.store)}
-					<article class="slip" class:dear={i === 1}>
-						<p class="slip-store">{slip.store}</p>
-						<p class="slip-printed">{slip.printed}</p>
-						<p class="slip-detail">{PACK_LB.toFixed(2)} lb at {money.format(slip.perLb)}/lb</p>
-						<p class="slip-total">{money.format(dollars(slip.cents))}</p>
-					</article>
-					{#if i === 0}
-						<p class="gap" bind:this={gapMark}>
-							<span>+</span>{#if live}<NumberFlow value={dollars(gapShown)} format={usd} />{:else}{money.format(dollars(gap))}{/if}
-						</p>
-					{/if}
-				{/each}
-			</div>
-		</div>
-	</section>
-
-	<PhoneTour />
+	<TownFlight signInFailed={data.signInFailed} bind:scene bind:flying />
 
 	<section class="cart">
 		<h2>Same cart. <span class="dear">{money.format(dollars(weekly))} a week apart.</span></h2>
@@ -181,6 +113,8 @@
 			<GoogleButton />
 		</div>
 	</section>
+
+	<AppReveal />
 
 	<section class="private">
 		<h2>Private by design.</h2>
@@ -205,7 +139,7 @@
 <footer>
 	<div class="brand">
 		<Wordmark />
-		<p>Every price you paid, read from your own receipts.</p>
+		<p>The grocery app that remembers every price you paid.</p>
 	</div>
 	<nav aria-label="Footer">
 		<div>
@@ -220,8 +154,8 @@
 		</div>
 	</nav>
 	<p class="sources">
-		Prices on this page are typical 2026 shelf prices from published store price lists and local price trackers.
-		Distances and the usual store belong to a sample shopper. Your own receipts replace all of it.
+		Store prices on this page are typical 2026 shelf prices from published store price lists and local price trackers.
+		The ground beef history is the US city average from the Bureau of Labor Statistics. The app screens show a sample shopper.
 	</p>
 	<p class="legal">© 2026 Billie</p>
 </footer>
@@ -233,6 +167,95 @@
 		z-index: 10;
 		background: color-mix(in srgb, var(--color-bg) 85%, transparent);
 		backdrop-filter: saturate(1.6) blur(18px);
+	}
+
+	.scenes {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: flex;
+		gap: 0.2rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--color-ink) 5%, transparent);
+		padding: 0.2rem;
+		translate: -50% -50%;
+		transition:
+			opacity 300ms,
+			translate 300ms cubic-bezier(0.32, 0.72, 0, 1);
+	}
+
+	.scenes.gone {
+		opacity: 0;
+		translate: -50% -80%;
+		pointer-events: none;
+	}
+
+	.scenes a {
+		display: block;
+		border-radius: 999px;
+		padding: 0.4rem 0.9rem;
+		font-size: 0.875rem;
+		font-weight: 500;
+		white-space: nowrap;
+		color: var(--color-muted);
+		transition:
+			background-color 300ms,
+			color 300ms;
+	}
+
+	.scenes a.on {
+		background: var(--color-ink);
+		color: #fff;
+	}
+
+	.scenes a:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	@media (hover: hover) {
+		.scenes a:not(.on):hover {
+			color: var(--color-ink);
+		}
+	}
+
+	/* on a phone the bar is solid, so the page never shows through it, and the demo lives in the page */
+	@media (max-width: 759px) {
+		.scenes,
+		.wide-only {
+			display: none;
+		}
+
+		.bar {
+			backdrop-filter: none;
+			background: var(--color-bg);
+			box-shadow: 0 1px 0 var(--color-line);
+		}
+
+		.close {
+			padding: 4.5rem var(--gutter) 3.5rem;
+		}
+
+		.close .actions {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.65rem;
+		}
+
+		.close .actions :global(form),
+		.close .actions :global(button) {
+			width: 100%;
+			justify-content: center;
+		}
+
+		.close .quiet {
+			text-align: center;
+		}
+
+		footer {
+			gap: 1.5rem;
+			padding-top: 2rem;
+		}
 	}
 
 	.bar nav {
@@ -261,7 +284,6 @@
 		padding: 0 var(--gutter);
 	}
 
-	h1,
 	h2 {
 		font-family: var(--font-display);
 		font-weight: 650;
@@ -270,33 +292,9 @@
 		color: var(--color-ink);
 	}
 
-	h1 {
-		font-size: clamp(2.75rem, 7vw, 5.5rem);
-		line-height: 1.02;
-	}
-
 	h2 {
 		font-size: clamp(2.1rem, 4.6vw, 3.75rem);
 		line-height: 1.05;
-	}
-
-	.hero {
-		padding-top: clamp(3rem, 9vh, 6.5rem);
-		text-align: center;
-	}
-
-	.lead {
-		margin: 1.25rem auto 0;
-		max-width: 34rem;
-		font-size: clamp(1.15rem, 1.8vw, 1.4rem);
-		line-height: 1.45;
-		color: var(--color-muted);
-		text-wrap: pretty;
-	}
-
-	.failed {
-		margin-top: 1rem;
-		color: var(--color-up);
 	}
 
 	.actions {
@@ -330,44 +328,159 @@
 		outline-offset: 3px;
 	}
 
-	/* the photo runs nearly edge to edge, past the side margin */
-	.photo {
-		margin: clamp(2.5rem, 7vh, 4.5rem) calc(0.75rem - var(--gutter)) 0;
+
+	.brand {
+		display: grid;
+		gap: 0.6rem;
+		align-content: start;
 	}
 
-	.photo img {
-		width: 100%;
-		height: auto;
-		border-radius: 28px;
-		box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.25);
+	.brand p {
+		max-width: 18rem;
+		line-height: 1.5;
 	}
 
-	/* the photo settles from slightly smaller to full size as it scrolls into place */
-	@supports (animation-timeline: view()) {
-		@media (prefers-reduced-motion: no-preference) {
-			.photo img {
-				animation: settle linear both;
-				animation-timeline: view();
-				animation-range: entry 0% cover 45%;
-			}
+	footer nav {
+		display: flex;
+		gap: 3rem;
+	}
 
+	footer nav div {
+		display: grid;
+		gap: 0.55rem;
+		align-content: start;
+	}
+
+	footer h2 {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--color-ink);
+	}
+
+	footer nav a {
+		position: relative;
+		color: inherit;
+		transition: color 150ms;
+	}
+
+	/* a 44px reach on small links */
+	footer nav a::after {
+		content: '';
+		position: absolute;
+		inset: -12px -6px;
+	}
+
+	@media (hover: hover) {
+		footer nav a:hover {
+			color: var(--color-ink);
 		}
 	}
 
-	@keyframes settle {
-		from {
-			transform: scale(0.9);
-			opacity: 0.6;
+	.sources,
+	.legal {
+		grid-column: 1 / -1;
+	}
+
+	.sources {
+		max-width: 44rem;
+		border-top: 1px solid var(--color-line);
+		padding-top: 1.25rem;
+		font-size: 0.8125rem;
+		line-height: 1.5;
+	}
+
+	.legal {
+		font-size: 0.8125rem;
+	}
+
+	.private {
+		padding-top: clamp(6rem, 16vh, 10rem);
+	}
+
+	.private ul {
+		display: grid;
+		gap: 1.1rem 2.5rem;
+		max-width: none;
+		margin-top: 2.25rem;
+	}
+
+	@media (min-width: 760px) {
+		.private ul {
+			grid-template-columns: 1fr 1fr;
 		}
 	}
 
-	@keyframes rise {
-		from {
-			transform: translateY(60px);
-			opacity: 0;
+	/* four promises side by side once the screen is wide enough to read them */
+	@media (min-width: 1440px) {
+		.private ul {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
 		}
 	}
 
+	.private li {
+		display: grid;
+		grid-template-columns: 1.6rem minmax(0, 1fr);
+		gap: 0.6rem;
+		align-items: start;
+		border-top: 1px solid var(--color-line);
+		padding-top: 1.1rem;
+		font-size: 1.125rem;
+		font-weight: 500;
+		line-height: 1.45;
+		color: var(--color-ink);
+	}
+
+	.private li svg {
+		width: 1.4rem;
+		height: 1.4rem;
+		fill: none;
+		stroke: var(--color-accent);
+		stroke-width: 2.2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	/* the words that carry each point: what you save in green, what it costs you in red */
+	.hl,
+
+	.fine {
+		display: inline-block;
+		margin-top: 2rem;
+		font-size: 1.0625rem;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+
+	.close {
+		padding: clamp(6rem, 16vh, 10rem) var(--gutter) clamp(5rem, 12vh, 8rem);
+		text-align: center;
+	}
+
+	.sign {
+		margin-bottom: 1.5rem;
+	}
+
+	footer {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 2rem 1rem;
+		margin: 0 auto;
+		max-width: var(--page);
+		border-top: 1px solid var(--color-line);
+		padding: 2.5rem var(--gutter);
+		font-size: 0.9375rem;
+		color: var(--color-muted);
+	}
+
+	@media (max-width: 599px) {
+		footer {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+
+	:global(::selection) {
+		background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+	}
 	.sub {
 		margin-top: 1.25rem;
 		max-width: 36rem;
@@ -376,94 +489,11 @@
 		color: var(--color-muted);
 	}
 
-	@media (min-width: 1000px) {
-	}
-
 	.money {
 		min-width: 4.5rem;
 		text-align: right;
 		font-size: 1.25rem;
 		font-weight: 600;
-	}
-
-	/* the problem: the same chicken on two receipts that never meet */
-	.problem {
-		margin-top: clamp(6rem, 16vh, 10rem);
-	}
-
-	.counter {
-		position: relative;
-		margin-top: 2.5rem;
-	}
-
-	.counter img {
-		width: 100%;
-		height: auto;
-		border-radius: 28px;
-	}
-
-	.slips {
-		position: relative;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem 1.25rem;
-		margin-top: -4rem;
-		padding: 0 1rem;
-	}
-
-	.slip {
-		width: min(100%, 16rem);
-		border-radius: 20px;
-		background: #fff;
-		padding: 1rem 1.15rem;
-		box-shadow: 0 24px 50px -24px rgb(0 0 0 / 0.3);
-	}
-
-	.slip-store {
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--color-muted);
-	}
-
-	.slip-printed {
-		margin-top: 0.5rem;
-		font-size: 0.8125rem;
-		letter-spacing: 0.02em;
-		color: var(--color-muted);
-	}
-
-	.slip-detail {
-		margin-top: 0.15rem;
-		font-size: 0.9375rem;
-		color: var(--color-ink);
-	}
-
-	.slip-total {
-		margin-top: 0.35rem;
-		font-family: var(--font-display);
-		font-size: 2rem;
-		font-weight: 700;
-		letter-spacing: -0.03em;
-		color: var(--color-ink);
-	}
-
-	.dear .slip-total {
-		color: var(--color-up);
-	}
-
-	.gap {
-		display: flex;
-		align-items: center;
-		border-radius: 999px;
-		background: #fff;
-		padding: 0.5rem 1rem;
-		font-family: var(--font-display);
-		font-size: 1.375rem;
-		font-weight: 700;
-		color: var(--color-up);
-		box-shadow: 0 12px 30px -14px rgb(0 0 0 / 0.3);
 	}
 
 	/* same cart, four chains: the bars grow with the totals as they roll in */
@@ -587,167 +617,11 @@
 		color: var(--color-accent);
 	}
 
-	.brand {
-		display: grid;
-		gap: 0.6rem;
-		align-content: start;
-	}
-
-	.brand p {
-		max-width: 18rem;
-		line-height: 1.5;
-	}
-
-	footer nav {
-		display: flex;
-		gap: 3rem;
-	}
-
-	footer nav div {
-		display: grid;
-		gap: 0.55rem;
-		align-content: start;
-	}
-
-	footer h2 {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-ink);
-	}
-
-	footer nav a {
-		position: relative;
-		color: inherit;
-		transition: color 150ms;
-	}
-
-	/* a 44px reach on small links */
-	footer nav a::after {
-		content: '';
-		position: absolute;
-		inset: -12px -6px;
-	}
-
-	@media (hover: hover) {
-		footer nav a:hover {
-			color: var(--color-ink);
-		}
-	}
-
-	.sources,
-	.legal {
-		grid-column: 1 / -1;
-	}
-
-	.sources {
-		max-width: 44rem;
-		border-top: 1px solid var(--color-line);
-		padding-top: 1.25rem;
-		font-size: 0.8125rem;
-		line-height: 1.5;
-	}
-
-	.legal {
-		font-size: 0.8125rem;
-	}
-
-	.private {
-		padding-top: clamp(6rem, 16vh, 10rem);
-	}
-
-	.private ul {
-		display: grid;
-		gap: 1.1rem 2.5rem;
-		max-width: none;
-		margin-top: 2.25rem;
-	}
-
-	@media (min-width: 760px) {
-		.private ul {
-			grid-template-columns: 1fr 1fr;
-		}
-	}
-
-	/* four promises side by side once the screen is wide enough to read them */
-	@media (min-width: 1440px) {
-		.private ul {
-			grid-template-columns: repeat(4, minmax(0, 1fr));
-		}
-	}
-
-	.private li {
-		display: grid;
-		grid-template-columns: 1.6rem minmax(0, 1fr);
-		gap: 0.6rem;
-		align-items: start;
-		border-top: 1px solid var(--color-line);
-		padding-top: 1.1rem;
-		font-size: 1.125rem;
-		font-weight: 500;
-		line-height: 1.45;
-		color: var(--color-ink);
-	}
-
-	.private li svg {
-		width: 1.4rem;
-		height: 1.4rem;
-		fill: none;
-		stroke: var(--color-accent);
-		stroke-width: 2.2;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-
-	/* the words that carry each point: what you save in green, what it costs you in red */
-	.hl,
-	.year strong {
-		color: var(--color-accent);
-	}
-
 	.dear {
 		color: var(--color-up);
 	}
 
 	.year strong {
-		font-weight: 650;
-	}
-
-	.fine {
-		display: inline-block;
-		margin-top: 2rem;
-		font-size: 1.0625rem;
-		text-decoration: underline;
-		text-underline-offset: 4px;
-	}
-
-	.close {
-		padding: clamp(6rem, 16vh, 10rem) var(--gutter) clamp(5rem, 12vh, 8rem);
-		text-align: center;
-	}
-
-	.sign {
-		margin-bottom: 1.5rem;
-	}
-
-	footer {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 2rem 1rem;
-		margin: 0 auto;
-		max-width: var(--page);
-		border-top: 1px solid var(--color-line);
-		padding: 2.5rem var(--gutter);
-		font-size: 0.9375rem;
-		color: var(--color-muted);
-	}
-
-	@media (max-width: 599px) {
-		footer {
-			grid-template-columns: minmax(0, 1fr);
-		}
-	}
-
-	:global(::selection) {
-		background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+		color: var(--color-accent);
 	}
 </style>
