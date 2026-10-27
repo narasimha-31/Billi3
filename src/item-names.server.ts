@@ -50,13 +50,12 @@ ${JSON.stringify(schema)}`;
 const KNOWN_PRODUCTS = 150;
 
 // Lines the shopper renamed themselves keep their name; one model call names the rest.
-// The explicit user filter backs up row level security, in case an admin client is ever passed in.
 export async function nameLines(supabase: SupabaseClient, userId: string | null, storeId: string | null, raws: string[], weighed: boolean[] = []): Promise<Named[]> {
 	let memory: Remembered[] = [];
 	let known: string[] = [];
 	if (userId) {
-		let query = supabase.from('name_memory').select('raw_text, name, brand, category, size_amount, size_unit').eq('user_id', userId).in('raw_text', raws);
-		query = storeId ? query.eq('store_id', storeId) : query.is('store_id', null);
+		// a function call, so line text goes in the body; a firewall blocks SQL-looking text in URLs
+		const query = supabase.rpc('my_name_memory', { p_raws: raws, p_store: storeId });
 		const [remembered, products] = await Promise.all([query, supabase.rpc('my_products')]);
 		if (remembered.error) throw remembered.error;
 		if (products.error) throw products.error;
