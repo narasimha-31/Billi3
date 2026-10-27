@@ -23,7 +23,7 @@
 		letter-spacing: -0.035em;
 	}
 
-	/* A backwards 3 at x-height, cut from a moving night sky. Everything is painted inside this one
+	/* A backwards 3 at x-height, cut from a night sky. Everything is painted inside this one
 	   box and clipped to the letter, so nothing it draws can reach past it. */
 	.e {
 		--shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2 1.5 16.5 21'%3E%3Cpath d='M15.8 5.6C14.4 3.9 12.6 3.2 10.5 3.2 7.1 3.2 4.8 5.1 4.8 7.6S7 11.9 10 11.9M10 11.9C6.5 11.9 4 13.7 4 16.4 4 19.2 6.7 20.9 10.6 20.9 12.9 20.9 14.9 20.1 16.5 18.4' fill='none' stroke='white' stroke-width='3.3' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -57,8 +57,7 @@
 		--sky: #7b5cff, #a66bff 30%, #ff5fae 55%, #ffb067 75%, #ff5fae 90%;
 	}
 
-	/* Two layers of small stars, each a repeating tile drifting its own way, so they wander through
-	   the letter like a slow sky instead of sitting in place. */
+	/* two layers of small stars, tiled at different sizes so they never line up */
 	.e::before,
 	.e::after {
 		--dot: max(0.6px, 0.011em);
@@ -82,55 +81,6 @@
 			radial-gradient(circle at 10% 90%, rgb(255 255 255 / 0.8) 0 var(--dot), transparent var(--fade)),
 			radial-gradient(circle at 75% 35%, #fff 0 var(--dot), transparent var(--fade));
 		background-size: 0.41em 0.29em;
-	}
-
-	@media (prefers-reduced-motion: no-preference) {
-		.e {
-			animation: flow 8s ease-in-out infinite alternate;
-		}
-
-		.e::before {
-			animation:
-				drift-a 11s linear infinite,
-				twinkle 2.2s ease-in-out infinite alternate;
-		}
-
-		.e::after {
-			animation:
-				drift-b 15s linear infinite,
-				twinkle 3.1s ease-in-out 0.8s infinite alternate;
-		}
-	}
-
-	@keyframes drift-a {
-		to {
-			background-position: 0.3em -0.68em;
-		}
-	}
-
-	@keyframes drift-b {
-		to {
-			background-position: -0.82em 0.29em;
-		}
-	}
-
-	@keyframes flow {
-		from {
-			background-position:
-				0 0,
-				0% 0%;
-		}
-		to {
-			background-position:
-				0 0,
-				100% 100%;
-		}
-	}
-
-	@keyframes twinkle {
-		to {
-			opacity: 0.4;
-		}
 	}
 
 	.wordmark:focus-visible {
