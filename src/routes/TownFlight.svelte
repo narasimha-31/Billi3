@@ -159,8 +159,10 @@
 			stage.style.perspectiveOrigin = `${ax}px ${ay}px`;
 			plane.style.transform = `translate3d(${ax}px, ${ay}px, 0) rotateX(${now.tilt}deg) rotateZ(${now.spin}deg) scale(${zoom}) translate(${-now.x}px, ${-now.y}px)`;
 			const part = (from: number) => Math.min(1, Math.max(0, (now.t - from) / 0.45));
-			const gapSeen = part(0.55) * (1 - part(1.5));
-			const creepSeen = part(1.55) * (1 - part(2.45));
+			// on a phone the next words card scrolls up over the map's cards, so they leave before it reaches them
+			const leave = phone ? 0.45 : 0;
+			const gapSeen = part(0.55) * (1 - part(1.5 - leave));
+			const creepSeen = part(1.55) * (1 - part(2.45 - leave));
 			const turned = part(2.5);
 			gapLine.style.strokeDashoffset = `${1 - part(0.55)}`;
 			gapLine.style.opacity = `${gapSeen}`;
