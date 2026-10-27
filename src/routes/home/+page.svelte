@@ -144,6 +144,7 @@
 		picking = true;
 		return async ({ result, update }) => {
 			if (result.type === 'success' && result.data?.added) toast({ key: `healthy:${result.data.added}`, kind: 'done', text: `${result.data.added} is on ${result.data.to}.`, action: { label: 'Open', href: '/list' } });
+			if (result.type === 'success' && result.data?.saved) toast({ key: `saved:${result.data.saved}`, kind: 'done', text: `${result.data.saved} saved for your next shop.`, action: { label: 'See saved', href: '/list' } });
 			await update();
 			picking = false;
 		};
@@ -337,6 +338,12 @@
 						{/key}
 						<div class="pick-actions">
 							<form method="POST" action="?/try_it" use:enhance={tried}><button class="pill-button" disabled={picking}>Add to my list</button></form>
+							<form method="POST" action="?/save" use:enhance={tried}>
+								<button class="quiet-button save" disabled={picking}>
+									<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4h11v16l-5.5-4-5.5 4z" /></svg>
+									Save
+								</button>
+							</form>
 							<form method="POST" action="?/another" use:enhance={tried}><button class="quiet-button" disabled={picking}>Show another</button></form>
 						</div>
 					{:else}
@@ -632,11 +639,21 @@
 		text-underline-offset: 3px;
 	}
 
+	/* the main action across, the two lighter ones side by side under it */
 	.pick-actions {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
 		margin-top: 0.2rem;
+	}
+
+	.pick-actions form:first-child {
+		grid-column: 1 / -1;
+	}
+
+	.pick-actions button {
+		width: 100%;
+		justify-content: center;
 	}
 
 	.quiet-button {
@@ -648,6 +665,21 @@
 		font-weight: 500;
 		color: var(--color-ink);
 		transition: transform var(--standard) var(--ease);
+	}
+
+	.save {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.save svg {
+		width: 1.05rem;
+		height: 1.05rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linejoin: round;
 	}
 
 	.quiet-button:active {

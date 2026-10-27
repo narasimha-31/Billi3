@@ -10,6 +10,7 @@ const MOST_LISTS = 10;
 const UUID = /^[0-9a-f-]{36}$/;
 
 type List = { id: string; name: string; items: string[] };
+type SavedFood = { name: string; why: string | null; category: string | null; allergens: string[]; source_url: string | null; source: string | null };
 type One<T> = T | T[] | null;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -17,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!user) redirect(303, '/');
 
 	const monthStart = `${new Date().toISOString().slice(0, 7)}-01`;
-	const [lists, products, branches, map, month] = await Promise.all([
+	const [lists, products, branches, map, month, settings] = await Promise.all([
 		locals.supabase.from('shopping_lists').select('id, name, items').order('created_at'),
 		locals.supabase.rpc('my_products'),
 		myBranches(locals.supabase),
@@ -27,9 +28,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.select('name, total_cents, products!product_id(name), receipts!inner(purchased_on, status)')
 			.eq('kind', 'item')
 			.eq('receipts.status', 'saved')
-			.gte('receipts.purchased_on', monthStart)
+			.gte('receipts.purchased_on', monthStart),
+		locals.supabase.from('user_settings').select('healthy_saved').maybeSingle()
 	]);
-	for (const answer of [lists, products, month]) if (answer.error) throw answer.error;
+	for (const answer of [lists, products, month, settings]) if (answer.error) throw answer.error;
+
+	// saved healthy picks with why and where it was read; the shared list is small, so all of it
+	const savedNames = (settings.data?.healthy_saved as string[] | undefined) ?? [];
+	const foods = savedNames.length ? await locals.supabase.from('healthy_foods').select('name, why, category, allergens, source_url, source') : { data: [], error: null };
+	if (foods.error) throw foods.error;
+	const foodOf = new Map((foods.data as SavedFood[]).map((f) => [f.name, f]));
 
 	const all = (lists.data ?? []) as List[];
 	// every list's items priced in one call
@@ -53,6 +61,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			return { id: list.id, name: list.name, count: list.items.length, best: stores[0] ?? null, spentCents: spentOn(list.items, lines) };
 		}),
 		open: open ? { id: open.id, name: open.name, list: open.items, ...compareStores(open.items, rows) } : null,
+		saved: savedNames.map((name) => foodOf.get(name) ?? { name, why: null, category: null, allergens: [], source_url: null, source: null }),
 		you: map.you,
 		places: map.you ? placed(branches, map.you) : []
 	};
@@ -136,6 +145,17 @@ export const actions: Actions = {
 		if (!list) return fail(404, { problem: 'That list is gone.' });
 		const name = String(form.get('name') ?? '');
 		await saveItems(locals, list.id, list.items.filter((item) => !same(item, name)));
+	},
+
+	unsave: async ({ request, locals }) => {
+		const user = await locals.getUser();
+		if (!user) return fail(401, { problem: 'signed out' });
+		const name = String((await request.formData()).get('name') ?? '');
+		const { data, error } = await locals.supabase.from('user_settings').select('healthy_saved').maybeSingle();
+		if (error) throw error;
+		const left = ((data?.healthy_saved as string[] | undefined) ?? []).filter((s) => s !== name);
+		const stored = await locals.supabase.from('user_settings').upsert({ user_id: user.id, healthy_saved: left, updated_at: new Date().toISOString() });
+		if (stored.error) throw stored.error;
 	},
 
 	clear: async ({ request, locals }) => {

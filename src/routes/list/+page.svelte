@@ -10,6 +10,7 @@
 	import type { MapPin } from '../StoreMap.svelte';
 	import MapFrame from '../MapFrame.svelte';
 	import MapLegend from '../MapLegend.svelte';
+	import AisleIcon from '../AisleIcon.svelte';
 
 	let { data, form } = $props();
 
@@ -28,6 +29,8 @@
 	const mapPins = $derived<MapPin[]>(
 		pins.map((p) => ({ id: p.store, lat: p.lat, lng: p.lng, label: `${storeName(p.store) ?? p.store} · ${p.items.length} ${p.items.length === 1 ? 'item' : 'items'}`, cents: p.cents, title: storeName(p.store) ?? p.store, cheapest: p.items.length === most }))
 	);
+	// a saved food goes onto the open list, or else the first one
+	const target = $derived(open ? { id: open.id, name: open.name } : data.lists[0] ? { id: data.lists[0].id, name: data.lists[0].name } : null);
 	let picked = $state<string | null>(null);
 	const pickedPin = $derived(pins.find((p) => p.store === picked) ?? null);
 
@@ -77,6 +80,44 @@
 			</form>
 		{/if}
 		{#if form?.problem}<p class="problem" role="alert">{form.problem}</p>{/if}
+
+		{#if data.saved.length}
+			<section class="saved surface" aria-labelledby="saved-title">
+				<h2 id="saved-title">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4h11v16l-5.5-4-5.5 4z" /></svg>
+					Saved for your next shop
+				</h2>
+				<ul>
+					{#each data.saved as food (food.name)}
+						<li transition:slide={{ duration: still ? 0 : 200 }}>
+							<div class="food">
+								<p class="food-name"><AisleIcon aisle={food.category} />{food.name}</p>
+								{#if food.why}<p class="food-why">{food.why}</p>{/if}
+								{#if food.allergens.length}<p class="food-allergy">Contains {food.allergens.map((a) => (a === 'milk' ? 'milk (lactose)' : a)).join(', ')}</p>{/if}
+								{#if food.source_url}<a class="food-source" href={food.source_url} target="_blank" rel="noopener noreferrer">From {food.source}</a>{/if}
+							</div>
+							<div class="food-actions">
+								{#if target}
+									<form method="POST" action="?/add" use:enhance>
+										<input type="hidden" name="list" value={target.id} />
+										<input type="hidden" name="name" value={food.name} />
+										<button class="round" aria-label="Add {food.name} to {target.name}" title="Add to {target.name}">
+											<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+										</button>
+									</form>
+								{/if}
+								<form method="POST" action="?/unsave" use:enhance>
+									<input type="hidden" name="name" value={food.name} />
+									<button class="round quiet" aria-label="Remove {food.name} from saved" title="Remove">
+										<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8" /></svg>
+									</button>
+								</form>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 
 		<ul class="lists">
 			{#each data.lists as list (list.id)}
@@ -588,5 +629,125 @@
 		.list-head:hover {
 			background: rgb(118 118 128 / 0.05);
 		}
+	}
+
+	.saved {
+		margin-bottom: 1rem;
+		padding: 1rem 1rem 0.5rem;
+	}
+
+	.saved h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-size: 1.0625rem;
+		font-weight: 600;
+	}
+
+	.saved h2 svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: color-mix(in srgb, var(--color-accent) 18%, transparent);
+		stroke: var(--color-accent);
+		stroke-width: 2;
+		stroke-linejoin: round;
+	}
+
+	.saved li {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.75rem;
+		align-items: start;
+		padding: 0.8rem 0;
+	}
+
+	.saved li + li {
+		border-top: 1px solid color-mix(in srgb, var(--color-sep) 12%, transparent);
+	}
+
+	/* on wide screens saved foods sit in columns, so each one's buttons stay beside it */
+	@media (min-width: 1024px) {
+		.saved ul {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+			column-gap: 2rem;
+		}
+
+		.saved li + li {
+			border-top: 0;
+		}
+	}
+
+	.food {
+		display: grid;
+		gap: 0.2rem;
+		min-width: 0;
+	}
+
+	.food-name {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.food-why {
+		font-size: 0.875rem;
+		line-height: 1.4;
+		color: var(--color-muted);
+	}
+
+	.food-allergy {
+		font-size: 0.8125rem;
+		color: #8a4508;
+	}
+
+	.food-source {
+		justify-self: start;
+		font-size: 0.8125rem;
+		color: var(--color-muted);
+		text-decoration: underline;
+		text-decoration-color: color-mix(in srgb, var(--color-muted) 40%, transparent);
+		text-underline-offset: 3px;
+	}
+
+	.food-actions {
+		display: flex;
+		gap: 0.35rem;
+	}
+
+	.round {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+		color: var(--color-accent);
+		transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.round.quiet {
+		background: rgb(118 118 128 / 0.12);
+		color: var(--color-muted);
+	}
+
+	.round:active {
+		transform: scale(0.92);
+	}
+
+	.round:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	.round svg {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.2;
+		stroke-linecap: round;
 	}
 </style>

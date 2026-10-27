@@ -194,6 +194,20 @@ export const actions: Actions = {
 		return { added: name, to: list.name };
 	},
 
+	// kept on the Lists page for the next shop; the newest first, 60 at most
+	save: async ({ locals }) => {
+		const user = await locals.getUser();
+		if (!user) return fail(401);
+		const name = await moveOn(locals, user.id);
+		if (!name) return fail(400, { problem: 'Nothing to save.' });
+		const { data, error } = await locals.supabase.from('user_settings').select('healthy_saved').maybeSingle();
+		if (error) throw error;
+		const saved = [name, ...((data?.healthy_saved as string[] | undefined) ?? []).filter((s) => s !== name)].slice(0, 60);
+		const stored = await locals.supabase.from('user_settings').upsert({ user_id: user.id, healthy_saved: saved, updated_at: new Date().toISOString() });
+		if (stored.error) throw stored.error;
+		return { saved: name };
+	},
+
 	// finished or skipped, the tour stays away on every device
 	tour_seen: async ({ locals }) => {
 		const user = await locals.getUser();
