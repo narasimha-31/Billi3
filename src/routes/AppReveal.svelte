@@ -85,8 +85,9 @@
 			// it turns a little toward you while it opens, so the metal edges show, and lies flat once open
 			fold.style.transform = `rotateY(${-16 * Math.sin(opening * Math.PI)}deg) rotateX(${4 * Math.sin(opening * Math.PI)}deg)`;
 			fold.style.setProperty('--thick', `${foldW * 0.055}px`);
-			// shut, the body is rounded all round; open, the two screens meet square at the hinge
-			fold.style.setProperty('--hinge-corner', `${foldW * 0.12 * (1 - opening)}px`);
+			// shut, it is a "D": tight corners down the hinge side, round ones on the side your palm holds;
+			// open, the two screens meet square at the hinge
+			fold.style.setProperty('--hinge-corner', `${foldW * 0.035 * (1 - opening)}px`);
 			shade.style.opacity = `${Math.sin(opening * Math.PI)}`;
 			// the open screen spans both halves inside the bezels, so the two halves join without a gap
 			const openScreen = foldW * 2 - foldBezel * 2;
@@ -302,13 +303,13 @@
 	/* the shut phone's screen is on the back of the cover, a body's thickness behind the inner screen */
 	/* the thin titanium frame round the outside screen, wider down the left where the hinge is */
 	.outer {
+		border-radius: var(--hinge-corner, 4px) var(--corner, 14px) var(--corner, 14px) var(--hinge-corner, 4px);
 		box-shadow:
 			0 0 0 1.5px #cfc9be,
 			-3px 0 0 1.5px #bdb7ac,
 			-4px 0 0 1.5px #a59f94;
 		transform: rotateY(180deg) translateZ(var(--thick, 6px));
 		border: var(--bezel, 4px) solid #1d1d1f;
-		border-radius: var(--corner, 14px);
 	}
 
 	.outer img {
