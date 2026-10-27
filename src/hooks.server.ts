@@ -40,6 +40,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// A signed-in page is never kept by the browser: after signing out, back can't show it again from
 	// the page cache, and a shared computer keeps none of it.
 	if (event.route.id && SIGNED_IN.test(event.route.id)) response.headers.set('cache-control', 'private, no-store');
+	// no other site may frame a page, so no hidden clicks on our buttons
+	response.headers.set('content-security-policy', "frame-ancestors 'none'");
+	response.headers.set('x-frame-options', 'DENY');
+	response.headers.set('x-content-type-options', 'nosniff');
+	response.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
 	return response;
 };
 
