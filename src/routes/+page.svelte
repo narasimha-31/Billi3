@@ -60,7 +60,7 @@
 	<meta property="og:title" content={TITLE} />
 	<meta property="og:description" content={DESCRIPTION} />
 	<meta property="og:url" content={home} />
-	<meta property="og:image" content="{home}images/app-home-laptop.jpg" />
+	<meta property="og:image" content="{home}images/laptop.jpg" />
 	<meta name="twitter:card" content="summary_large_image" />
 	{@html `<script type="application/ld+json">${JSON.stringify({
 		'@context': 'https://schema.org',

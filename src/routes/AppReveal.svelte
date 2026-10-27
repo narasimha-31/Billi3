@@ -3,10 +3,10 @@
 
 	// real screenshots of the signed-in home, from the sample shopper, at each screen's own shape: a
 	// book-style foldable shut (about 83.8 x 120.6 mm) and open (about 167.6 x 120.6 mm), a phone, a laptop
-	const SHUT = { src: '/images/app-home-fold-closed.jpg', w: 828, h: 1192 };
-	const OPEN = { src: '/images/app-home-fold-open.jpg', w: 1664, h: 1197 };
-	const PHONE = { src: '/images/app-home-phone.jpg', w: 880, h: 1912 };
-	const LAPTOP = { src: '/images/app-home-laptop.jpg', w: 2880, h: 1800 };
+	const SHUT = { src: '/images/fold-cover.jpg', w: 828, h: 1192 };
+	const OPEN = { src: '/images/fold-inner.jpg', w: 1664, h: 1197 };
+	const PHONE = { src: '/images/phone.jpg', w: 880, h: 1912 };
+	const LAPTOP = { src: '/images/laptop.jpg', w: 2880, h: 1800 };
 	// layers of metal stacked behind each screen, close enough to read as one solid side
 	const SLABS = Array.from({ length: 8 }, (_, i) => i / 7);
 
