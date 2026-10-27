@@ -35,7 +35,7 @@
 		"@number-flow/svelte": "^0.4.2",
 		"@supabase/ssr": "^0.12.7",
 		"@supabase/supabase-js": "^2.117.3",
-		"fflate": "0.8.2",
+		"fflate": "0.8.3",
 		"leaflet": "1.9.4",
 		"motion": "^14.2.0",
 		"pdfjs-dist": "6.4.299",
