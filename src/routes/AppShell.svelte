@@ -23,7 +23,8 @@
 	const links = [
 		{ href: '/home', label: 'Home', icon: 'M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z' },
 		{ href: '/receipts', label: 'Receipts', icon: 'M6 3h12v18l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3L6 21zM9 8h6M9 12h6M9 16h4' },
-		{ href: '/prices', label: 'Prices', icon: 'M3.5 12.5 11 5h8v8l-7.5 7.5a1.5 1.5 0 0 1-2.1 0L3.5 14.6a1.5 1.5 0 0 1 0-2.1zM15.5 8.5h.01' }
+		{ href: '/prices', label: 'Prices', icon: 'M3.5 12.5 11 5h8v8l-7.5 7.5a1.5 1.5 0 0 1-2.1 0L3.5 14.6a1.5 1.5 0 0 1 0-2.1zM15.5 8.5h.01' },
+		{ href: '/list', label: 'Lists', icon: 'M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01' }
 	];
 	const under = (path: string, href: string) => path === href || path.startsWith(`${href}/`);
 	// The tab follows the tap at once: while the next page's data loads, the link being opened is
@@ -119,7 +120,7 @@
 	<header class="top">
 		<div class="site-top">
 			<Wordmark href="/home" />
-			<nav aria-label="Main" class:ready style:--selected={selected}>
+			<nav aria-label="Main" class:ready style:--selected={selected} style:--tabs={links.length}>
 				{#if selected >= 0}<span class="pill" aria-hidden="true"></span>{/if}
 				<!-- like a phone app: tabs open from Home stack one deep, so back goes Home, then out -->
 				{#each links as link, i (link.href)}
@@ -131,6 +132,9 @@
 			</nav>
 			<div class="end">
 				<ThemePicker />
+				<a class="settings" href="/settings" aria-label="Settings" aria-current={under(page.url.pathname, '/settings') ? 'page' : undefined}>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
+				</a>
 				<AccountMenu {firstName} />
 			</div>
 		</div>
@@ -228,7 +232,7 @@
 		--pad: 2px;
 		position: relative;
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: repeat(var(--tabs), minmax(0, 1fr));
 		margin: 0 auto;
 		border-radius: 11px;
 		background: color-mix(in srgb, var(--color-sep) 7%, transparent);
@@ -243,7 +247,7 @@
 		top: var(--pad);
 		bottom: var(--pad);
 		left: var(--pad);
-		width: calc((100% - 2 * var(--pad)) / 3);
+		width: calc((100% - 2 * var(--pad)) / var(--tabs));
 		border-radius: 9px;
 		background: var(--color-selected);
 		box-shadow:
@@ -304,6 +308,52 @@
 
 	nav svg {
 		display: none;
+	}
+
+	.settings {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 999px;
+		color: var(--color-muted);
+		-webkit-tap-highlight-color: transparent;
+		transition:
+			color 160ms,
+			background-color 160ms,
+			transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.settings svg {
+		width: 1.4rem;
+		height: 1.4rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.7;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.settings[aria-current='page'] {
+		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+		color: var(--color-accent);
+	}
+
+	.settings:active {
+		transform: scale(0.92);
+		transition-duration: 160ms, 160ms, 80ms;
+	}
+
+	.settings:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	@media (hover: hover) {
+		.settings:hover {
+			color: var(--color-ink);
+			background: color-mix(in srgb, var(--color-sep) 8%, transparent);
+		}
 	}
 
 	/* on phones the same links become a floating tab bar, lifted clear of the home indicator

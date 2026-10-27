@@ -23,7 +23,6 @@
 			<span class="initial">{initial}</span>
 		</summary>
 		<div class="menu">
-			<a href="/list">Lists</a>
 			<a href="/settings">Settings</a>
 			<form method="POST" action="/?/signout" use:enhance={leaveApp}>
 				<button>Sign out</button>
