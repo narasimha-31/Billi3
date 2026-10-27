@@ -105,7 +105,10 @@ function runningLow(rows: { purchased_on: string; receipt_items: { name: string 
 	for (const row of rows) {
 		for (const line of row.receipt_items) {
 			const name = line.products?.name ?? line.name;
-			if (name) buysOf.set(name, [...(buysOf.get(name) ?? []), { on: row.purchased_on, quantity: line.quantity, unit: line.unit }]);
+			if (!name) continue;
+			const buys = buysOf.get(name) ?? [];
+			buys.push({ on: row.purchased_on, quantity: line.quantity, unit: line.unit });
+			buysOf.set(name, buys);
 		}
 	}
 	return [...buysOf]

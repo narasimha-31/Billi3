@@ -21,10 +21,13 @@ export function names(title: string, product: string) {
 	return mine.length > 0 && mine.every((w) => words.has(w));
 }
 
-// each notice once, with the first of the shopper's products it names
+// each notice once, with the first of the shopper's products it names. Each title and product is split
+// into words once, so O(recalls x products x words) set lookups.
 export function recallsFor(recalls: Recall[], bought: string[]) {
+	const products = bought.map((name) => ({ name, words: keyWords(name) })).filter((p) => p.words.length);
 	return recalls.flatMap((recall) => {
-		const product = bought.find((name) => names(recall.title, name));
+		const words = new Set(wordsOf(recall.title));
+		const product = products.find((p) => p.words.every((w) => words.has(w)))?.name;
 		return product ? [{ ...recall, product }] : [];
 	});
 }
