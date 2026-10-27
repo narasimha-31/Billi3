@@ -118,7 +118,8 @@
 			for (let i = 0; i < all.length; i++) {
 				const box = all[i].getBoundingClientRect();
 				if (box.top > 1) break;
-				t = Math.min(scenes.length - 1, i + Math.min(1, -box.top / box.height));
+				// a step resting a fraction of a pixel low would make t negative and the loop die
+				t = Math.min(scenes.length - 1, i + Math.min(1, Math.max(0, -box.top) / box.height));
 			}
 			return t;
 		}
