@@ -40,6 +40,12 @@
 
 	// the town: a river, highways, avenues, and blocks of buildings, laid out once from a fixed seed
 	const SIZE = 2000;
+	const roads = [
+		'M0 520 C 600 470 1100 640 2000 560',
+		'M300 2000 C 420 1400 760 1100 1100 900 S 1700 300 1900 0',
+		'M0 1500 C 700 1380 1300 1560 2000 1380',
+		'M1180 0 C 1150 700 1240 1300 1120 2000'
+	];
 	const PERSPECTIVE = 1500;
 	let seed = 7;
 	const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -75,6 +81,14 @@
 	let flip = $state<HTMLElement>();
 	let flipped = $state(false);
 	const gapAt = { x: (low.x + high.x) / 2 + 150, y: (low.y + high.y) / 2 };
+	const gapBend = { x: (low.x + high.x) / 2 + 260, y: (low.y + high.y) / 2 };
+	const gapBox = (() => {
+		const xs = [low.x, high.x, gapBend.x];
+		const ys = [low.y, high.y, gapBend.y];
+		const x = Math.min(...xs) - 10;
+		const y = Math.min(...ys) - 10;
+		return { x, y, w: Math.max(...xs) + 10 - x, h: Math.max(...ys) + 10 - y };
+	})();
 	let ready = $state(false);
 
 	onMount(() => {
@@ -214,19 +228,21 @@
 						<path d="M0 {i * 160 + 40} H {SIZE}" />
 					{/each}
 				</g>
-				<g class="roads">
-					<path d="M0 520 C 600 470 1100 640 2000 560" />
-					<path d="M300 2000 C 420 1400 760 1100 1100 900 S 1700 300 1900 0" />
-					<path d="M0 1500 C 700 1380 1300 1560 2000 1380" />
-					<path d="M1180 0 C 1150 700 1240 1300 1120 2000" />
+				<g class="road-edges">
+					{#each roads as d (d)}<path {d} />{/each}
 				</g>
-				<path class="gap-line" bind:this={gapLine} pathLength="1" d="M{low.x} {low.y} Q {(low.x + high.x) / 2 + 260} {(low.y + high.y) / 2} {high.x} {high.y}" />
+				<g class="roads">
+					{#each roads as d (d)}<path {d} />{/each}
+				</g>
 				{#each stores as s (s.name)}
 					<ellipse cx={s.x} cy={s.y} rx="34" ry="34" class="spot" />
 					<circle cx={s.x} cy={s.y} r="11" class="dot" />
 				{/each}
 			</svg>
-
+			<!-- its own small layer, so drawing the line never repaints the whole town -->
+			<svg class="gap" viewBox="{gapBox.x} {gapBox.y} {gapBox.w} {gapBox.h}" style:left="{gapBox.x}px" style:top="{gapBox.y}px" width={gapBox.w} height={gapBox.h}>
+				<path class="gap-line" bind:this={gapLine} pathLength="1" d="M{low.x} {low.y} Q {gapBend.x} {gapBend.y} {high.x} {high.y}" />
+			</svg>
 		</div>
 
 		<div class="overlay">
@@ -367,12 +383,18 @@
 		stroke-width: 10;
 	}
 
-	.roads path {
+	.roads path,
+	.road-edges path {
 		fill: none;
 		stroke: #fff;
 		stroke-width: 26;
 		stroke-linecap: round;
-		filter: drop-shadow(0 0 2px #d4d8df);
+	}
+
+	/* a soft edge under each road, drawn once instead of a filter */
+	.road-edges path {
+		stroke: #dde1e7;
+		stroke-width: 30;
 	}
 
 	.spot {
@@ -383,6 +405,12 @@
 		fill: var(--color-ink);
 		stroke: #fff;
 		stroke-width: 6;
+	}
+
+	.gap {
+		position: absolute;
+		overflow: visible;
+		will-change: opacity;
 	}
 
 	.gap-line {
