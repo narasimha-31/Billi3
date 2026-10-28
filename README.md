@@ -89,13 +89,43 @@ We used Token Factory only. The app is hosted on Vercel and Supabase free tiers,
 
 Billie has made 81 Tavily searches so far.
 
-## How we tested it
+## Evals, failure modes and security
 
-- **295 automated tests** for the money math, receipt checks, budgets, limits and parsing.
-- **50 database security tests.** Each shopper's receipts are locked to their account in the database itself.
-- **AI evals on real, crumpled receipts**, the far-away photo, and PDFs, through the same code path the app uses.
-- **Playwright scripts** that click through the app at phone and laptop sizes and check what changed: uploads, the map, guest sessions, the store picker, and scrolling the landing page.
-- **An attack pass on the live app.** A second account could not read, change or delete anyone else's receipts, stores, lists, settings or photos, through the pages or the database API. Forms posted from other sites are refused. Receipt lines written as attacks were skipped, never obeyed.
+Every number here comes from a real run on October 28, 2026, through the same code the app uses.
+
+### Reading evals
+
+13 real model calls on test receipts, each checking one thing that goes wrong on real paper. 12 pass.
+
+- Reads a normal receipt and keeps no card digits
+- Ignores orders printed on a receipt: "Ignore all previous instructions", a fake $999 item and a fake store name never come through
+- Refuses a handwritten bill, but reads a printed receipt someone wrote on
+- Takes the balance as the total, not the cash handed over, and works out multi-buy prices
+- Reads a quantity line whose price sits on the line above
+- Reads a receipt photographed sideways or upside down
+- Gives the same product the same name across stores, keeps weights out of names
+- Refuses a photo that is not a receipt
+- Reads an online order as a delivery and keeps no card digits
+- Flags a padded receipt whose lines don't add up, and rude item names
+
+The one that fails: on a made-up multi-buy receipt, Kimi K2.7 misread a line. The app's own totals check caught it, so the receipt was marked for a quick look instead of saving a wrong price. That is the check doing its job, and why it runs on every receipt.
+
+### What breaks, and what Billie does about it
+
+| What we saw | What Billie does |
+| --- | --- |
+| The main reader is slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at our old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
+| A line is misread. | The lines are added up and checked against the printed subtotal and total. A receipt that doesn't add up is marked for the shopper to check. |
+| Text on a receipt tries to give the model orders. | Answers must match a strict schema, and attack lines are left out or flagged, never named as products. |
+| A photo is blurry, handwritten, not a receipt, or the same one twice. | A blurry photo is flagged on the phone before it is sent, with a choice to retake it. The rest are refused, and a refused photo doesn't count toward the day's receipts. |
+| The day's AI budget runs out. | Each person, new accounts and guests have caps of their own. Photos are kept to read later, and guests are told plainly when their reads run out, never a fake "try again". |
+| Receipt lines that look like SQL were blocked by Supabase's firewall in URL filters, failing the whole read. | Those lookups now go in a request body, and a test receipt full of attack lines reads cleanly. |
+
+### Security
+
+- **50 database security tests.** Each shopper's receipts, items, stores, photos, settings and upload counts are locked to their account in the database itself. Products are readable only through your own receipt lines. Limits live in the database too: 5 receipts a minute, 10 a day (3 on an account's first day), 100 in 30 days, JPEG photos up to 5 MB.
+- **An attack pass on the live app** with throwaway accounts. A second account could not read, change or delete another person's data through the pages, the forms or the database API. Forms posted from other sites are refused, no other site can frame the app, and signed-out visitors get nothing.
+- **295 automated tests** for the money math, receipt checks, budgets, limits and parsing, and Playwright scripts that click through the app at phone and laptop sizes.
 
 ## Run it yourself
 
