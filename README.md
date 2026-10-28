@@ -4,6 +4,8 @@
 
 Open source under the MIT License. Free to use, change and share.
 
+Built for the Nebius x NVIDIA Global AI Hackathon, October 2026, in the Best Apps and Agents track.
+
 Billie reads your grocery receipts and remembers every price you paid, store by store. It shows where the same item costs less, when a price goes up, and when food you bought is recalled.
 
 **Try it live, no sign-in:** [billi3.vercel.app/demo](https://billi3.vercel.app/demo)
@@ -132,8 +134,8 @@ The one that fails: on a made-up multi-buy receipt, Kimi K2.7 misread a line. Th
 You need Node 22 or newer, a Supabase project with Google sign-in turned on, a Nebius Token Factory key and a Tavily key.
 
 ```
-git clone https://github.com/narasimha-31/BillBuddy.git
-cd BillBuddy
+git clone https://github.com/narasimha-31/Billi3.git
+cd Billi3
 npm install
 ```
 
