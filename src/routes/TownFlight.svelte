@@ -97,6 +97,8 @@
 		let top = 0;
 		let span = 1;
 		let phone = false;
+		let fit = 1;
+		let low = 0.9;
 		let width = 0;
 		let height = 0;
 		let frame = 0;
@@ -108,7 +110,14 @@
 			height = innerHeight;
 			width = innerWidth;
 			span = Math.max(1, box.height);
-			phone = width < 760;
+			// a tablet held upright has no room beside the words either, so it gets the phone's layout
+			phone = width < 760 || (width < 1200 && height > width);
+			// the town was laid out for 1440 wide; narrower screens shrink it so it stays right of the words,
+			// and an upright tablet draws the phone's town larger to fill its width
+			fit = phone ? Math.min(1.6, Math.max(1, width / 500)) : Math.min(1, width / 1440);
+			// the opening town sits under the words: low on a phone, midway down the free space on a tablet
+			const words = steps.querySelector<HTMLElement>('.words');
+			low = width < 760 || !words ? 0.9 : Math.min(0.9, (words.offsetTop + words.offsetHeight + height) / 2 / height);
 		}
 
 		// Where the scroll says the camera should be: scene i while its words fill the screen, part way to
@@ -152,9 +161,9 @@
 			}
 			// on a phone the opening town sits low and small, under the words
 			const hero = phone ? Math.max(0, 1 - now.t * 2.5) : 0;
-			const zoom = now.zoom * (phone ? 0.72 - hero * 0.16 : 1);
-			const ax = width * (phone ? 0.5 : 0.66);
-			const ay = height * (phone ? 0.4 + hero * 0.5 : 0.55);
+			const zoom = now.zoom * fit * (phone ? 0.72 - hero * 0.16 : 1);
+			const ax = width * (phone ? 0.5 : 0.66 + (1 - fit) * 0.25);
+			const ay = height * (phone ? 0.4 + hero * (low - 0.4) : 0.55);
 			// written straight to the few elements that move, so nothing else is restyled each frame
 			wash.style.opacity = `${hero}`;
 			stage.style.perspectiveOrigin = `${ax}px ${ay}px`;
@@ -184,7 +193,7 @@
 				const across = u * cs - v * ss;
 				const down = u * ss + v * cs;
 				const near = PERSPECTIVE / (PERSPECTIVE - down * st);
-				el.style.transform = `translate3d(${ax + across * near}px, ${ay + down * ct * near}px, 0) scale(${near * size * (phone ? 0.82 : 1)})`;
+				el.style.transform = `translate3d(${ax + across * near}px, ${ay + down * ct * near}px, 0) scale(${near * size * (phone ? 0.82 : fit)})`;
 			};
 			stores.forEach((s, i) => place(pins[i], s.x, s.y));
 			place(gapTag, gapAt.x, gapAt.y, 0.8 + gapSeen * 0.2);
@@ -642,7 +651,7 @@
 	}
 
 	.first .words {
-		max-width: 36rem;
+		max-width: min(36rem, 46vw);
 	}
 
 	h1,
@@ -744,7 +753,7 @@
 	}
 
 	/* on a phone the town fills the screen and each scene's words sit in a card at the bottom */
-	@media (max-width: 759px) {
+	@media (max-width: 759px), (max-width: 1199px) and (orientation: portrait) {
 		/* both actions the same width, one above the other, easy for a thumb */
 		.actions {
 			flex-direction: column;
@@ -770,6 +779,10 @@
 		.first {
 			align-items: flex-start;
 			padding-top: 5.5rem;
+		}
+
+		.first .words {
+			max-width: 36rem;
 		}
 
 		h1 {
