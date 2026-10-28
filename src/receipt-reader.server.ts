@@ -81,7 +81,7 @@ export const readingPaused = async () => (await Promise.all((['vision', 'visionB
 // A model that just failed is skipped, and when every model just failed (Token Factory itself is
 // down) the read stops at once without calling anyone: the receipt waits and nothing loops.
 // A spent daily budget is not an outage, so it never falls through to the next model.
-export async function readReceipt(jpeg: Uint8Array, userId: string | null, roles: VisionRole[] = ['vision', 'visionBackup']): Promise<Reading> {
+export async function readReceipt(jpeg: Uint8Array, userId: string | null, roles: VisionRole[] = ['vision', 'visionBackup'], onRead?: (role: VisionRole) => void): Promise<Reading> {
 	const image = `data:image/jpeg;base64,${base64(jpeg)}`;
 	if (roles.length > 1) {
 		const failed = await Promise.all(roles.map((role) => recentlyFailed(role)));
@@ -90,7 +90,7 @@ export async function readReceipt(jpeg: Uint8Array, userId: string | null, roles
 	}
 	for (const [i, role] of roles.entries()) {
 		try {
-			return await structured<Reading>({
+			const reading = await structured<Reading>({
 				role,
 				purpose: 'read_receipt',
 				userId,
@@ -107,6 +107,8 @@ export async function readReceipt(jpeg: Uint8Array, userId: string | null, roles
 					}
 				]
 			});
+			onRead?.(role);
+			return reading;
 		} catch (error) {
 			const tryNext = error instanceof BadAnswer || (error instanceof AiUnavailable && !error.budget);
 			if (!tryNext || i === roles.length - 1) throw error;

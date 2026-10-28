@@ -17,9 +17,7 @@
 		stores,
 		history,
 		only = $bindable(null),
-		onstore,
-		demo = false,
-		onpretend
+		onstore
 	}: {
 		map: { on: boolean; zip: string | null; you: Point | null };
 		places: Placed[];
@@ -27,9 +25,6 @@
 		history: History;
 		only?: string | null;
 		onstore?: (storeId: string) => void;
-		demo?: boolean;
-		// the demo's pretend unlock: nothing is sent or saved
-		onpretend?: () => void;
 	} = $props();
 
 	let opening = $state(false);
@@ -175,7 +170,7 @@
 			{#if pins.length && !pins.some((p) => p.cents !== null)}
 				<p class="hint">None of your stores on the map has sold you this yet.</p>
 			{/if}
-			{#if awayCount && !demo}
+			{#if awayCount}
 				<button type="button" class="link quiet" onclick={() => (withAway = !withAway)}>
 					{withAway ? 'Home area only' : `${awayCount} ${awayCount === 1 ? 'store' : 'stores'} away from home · Show`}
 				</button>
@@ -196,25 +191,7 @@
 			<div class="picture" aria-hidden="true"></div>
 			<div class="sheet" transition:slide={{ duration: still ? 0 : 260 }}>
 				<p class="title">Where you paid what</p>
-				{#if demo}
-					<form
-						class="pretend"
-						onsubmit={(e) => {
-							e.preventDefault();
-							opening = false;
-							onpretend?.();
-						}}
-					>
-						<label>
-							<span>Your ZIP code</span>
-							<input value={map.zip ?? ''} readonly inputmode="numeric" />
-						</label>
-						<button class="pill-button">Show my stores on a map</button>
-						<p class="why">In the demo nothing is sent or saved. In your account only the ZIP is kept, never your address.</p>
-					</form>
-				{:else}
-					<MapUnlock ondone={() => (opening = false)} />
-				{/if}
+				<MapUnlock ondone={() => (opening = false)} />
 			</div>
 		</div>
 	{:else}
@@ -487,39 +464,6 @@
 		font-size: 1.0625rem;
 		font-weight: 650;
 		letter-spacing: -0.01em;
-	}
-
-	.pretend {
-		display: grid;
-		grid-template-columns: minmax(0, 9rem) auto;
-		align-items: end;
-		justify-content: start;
-		gap: 0.6rem 0.75rem;
-	}
-
-	.pretend label {
-		display: grid;
-		gap: 0.3rem;
-		font-size: 0.8125rem;
-		color: var(--color-muted);
-	}
-
-	.pretend input {
-		width: 100%;
-		border: 1px solid color-mix(in srgb, var(--color-sep) 18%, transparent);
-		border-radius: 10px;
-		background: var(--color-surface);
-		padding: 0.55rem 0.75rem;
-		font-size: 1rem;
-		letter-spacing: 0.08em;
-		color: var(--color-ink);
-	}
-
-	.pretend .why {
-		grid-column: 1 / -1;
-		max-width: 40ch;
-		font-size: 0.8125rem;
-		color: var(--color-muted);
 	}
 
 	@media (max-width: 480px) {

@@ -21,7 +21,7 @@ function clientReturning(result: { user: unknown; error: unknown }) {
 describe('currentUser', () => {
 	it('returns the user from a valid token', async () => {
 		const claims = { sub: 'u1', email: 'a@b.test', user_metadata: { full_name: 'Sam Lee' } };
-		expect(await currentUser(clientReturning({ user: claims, error: null }))).toEqual({ id: 'u1', email: 'a@b.test', user_metadata: { full_name: 'Sam Lee' } });
+		expect(await currentUser(clientReturning({ user: claims, error: null }))).toEqual({ id: 'u1', email: 'a@b.test', user_metadata: { full_name: 'Sam Lee' }, guest: false });
 	});
 
 	it('treats no session as signed out', async () => {

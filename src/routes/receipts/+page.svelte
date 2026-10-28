@@ -156,7 +156,7 @@
 			<h1 class="large-title">Receipts</h1>
 
 			<div class="upload surface">
-				<ReceiptUploader bind:this={uploader} uploads={data.uploads} dailyLimit={data.dailyLimit} paused={data.paused} onreading={busy} />
+				<ReceiptUploader bind:this={uploader} uploads={data.uploads} dailyLimit={data.dailyLimit} paused={data.paused} closed={data.closed} onreading={busy} />
 			</div>
 
 			{#if saved.length > 1}

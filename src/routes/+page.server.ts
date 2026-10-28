@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { DISPLAY_COLUMNS, DISPLAY_COOKIE, DISPLAY_COOKIE_OPTIONS, displayCookie, fromRow } from '../display';
+import { deleteAccount } from '../delete-account.server';
 import { signInWithCode } from '../session.server';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -42,6 +43,17 @@ export const actions: Actions = {
 	signout: async ({ locals, cookies }) => {
 		const { error } = await locals.supabase.auth.signOut({ scope: 'local' });
 		if (error) throw error;
+		cookies.delete(DISPLAY_COOKIE, { path: '/' });
+		redirect(303, '/');
+	},
+
+	// a guest's account goes at once, receipts, photos and all
+	endguest: async ({ locals, cookies }) => {
+		const user = await locals.getUser();
+		if (!user?.guest) redirect(303, '/');
+		const { error } = await locals.supabase.auth.signOut({ scope: 'local' });
+		if (error) throw error;
+		await deleteAccount(user.id);
 		cookies.delete(DISPLAY_COOKIE, { path: '/' });
 		redirect(303, '/');
 	},

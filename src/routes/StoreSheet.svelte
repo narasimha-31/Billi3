@@ -69,10 +69,14 @@
 	type Place = { name: string | null; address: string; miles: number };
 	let places = $state<Place[] | null>(null);
 	let fromWeb = $state(false);
+	let webClosed = $state(false);
 	let searching = $state(false);
+	// which box the suggestions belong to: finding the store, or a branch's address being changed
+	let searchFor = $state<string>('find');
 	let timer: ReturnType<typeof setTimeout> | undefined;
-	function search(text: string) {
+	function search(text: string, target = 'find') {
 		clearTimeout(timer);
+		searchFor = target;
 		const id = storeId;
 		if (!id || text.trim().length < 3) {
 			places = null;
@@ -82,11 +86,12 @@
 		timer = setTimeout(async () => {
 			const response = await fetch(`/stores/${id}/nearby?q=${encodeURIComponent(text.trim())}`).catch(() => null);
 			const answer = response?.ok ? await response.json() : { places: [] };
-			if (id !== storeId || text !== typing) return;
+			if (id !== storeId || text !== (target === 'find' ? typing : fixed)) return;
 			places = answer.places ?? [];
 			fromWeb = answer.fromWeb === true;
+			webClosed = answer.searchClosed === true;
 			searching = false;
-		}, 700);
+		}, /^\d/.test(text.trim()) ? 300 : 700);
 	}
 
 	$effect(() => {
@@ -98,6 +103,29 @@
 
 	const pins = $derived(details?.branches.map((b) => ({ id: b.key, lat: b.lat, lng: b.lng, label: streetOf(b.address) ?? storeName(b.name), title: streetOf(b.address) ?? storeName(b.name) ?? '', guess: b.guess })) ?? []);
 </script>
+
+{#snippet suggestions(pick: (address: string) => void)}
+	{#if searching}
+		<p class="sub" aria-live="polite">Searching the map…</p>
+	{:else if places?.length}
+		<ul class="places" aria-label="Places found">
+			{#each places as place (place.address)}
+				<li>
+					<button type="button" disabled={busy} onclick={() => pick(place.address)}>
+						<span class="place-name">{place.name ?? streetOf(place.address)}</span>
+						<span class="sub">{place.address}</span>
+						<span class="far">{shortMiles(place.miles)}</span>
+					</button>
+				</li>
+			{/each}
+		</ul>
+		{#if fromWeb}<p class="sub">Not on OpenStreetMap, so these addresses come from the web. Pick the one you went to.</p>{/if}
+	{:else if places}
+		<p class="sub" aria-live="polite">
+			{webClosed ? 'Not on OpenStreetMap, and web search is used up for today. Type the street address instead.' : 'Nothing found by that name nearby. Try the street address.'}
+		</p>
+	{/if}
+{/snippet}
 
 <dialog bind:this={dialog} class="store-sheet" aria-labelledby="store-sheet-title" onclose={() => {
 		step.closed();
@@ -153,8 +181,9 @@
 							>
 								<label>
 									<span>The right address for this branch</span>
-									<input bind:value={fixed} placeholder="Street, city and state" autocomplete="off" maxlength="200" required disabled={busy} />
+									<input bind:value={fixed} oninput={() => search(fixed, branch.key)} placeholder="Street, city and state" autocomplete="off" maxlength="200" required disabled={busy} />
 								</label>
+								{#if searchFor === branch.key}{@render suggestions((address) => send({ action: 'move', key: branch.key, address }))}{/if}
 								<div class="actions">
 									<button class="pill-button small" disabled={busy}>{busy ? 'Finding it…' : 'Save'}</button>
 									<button type="button" class="text" onclick={() => (fixing = null)}>Cancel</button>
@@ -189,24 +218,7 @@
 						<span>{details.unplaced === 1 ? 'One receipt here isn’t' : `${details.unplaced} receipts here aren’t`} on the map yet. Find the store:</span>
 						<input bind:value={typing} oninput={() => search(typing ?? '')} type="search" placeholder="Store name or address" autocomplete="off" maxlength="200" required disabled={busy} />
 					</label>
-					{#if searching}
-						<p class="sub" aria-live="polite">Searching the map…</p>
-					{:else if places?.length}
-						<ul class="places" aria-label="Places found">
-							{#each places as place (place.address)}
-								<li>
-									<button type="button" disabled={busy} onclick={() => send({ action: 'address', address: place.address })}>
-										<span class="place-name">{place.name ?? streetOf(place.address)}</span>
-										<span class="sub">{place.address}</span>
-										<span class="far">{shortMiles(place.miles)}</span>
-									</button>
-								</li>
-							{/each}
-						</ul>
-						{#if fromWeb}<p class="sub">Not on OpenStreetMap, so these addresses come from the web. Pick the one you went to.</p>{/if}
-					{:else if places}
-						<p class="sub" aria-live="polite">Nothing found by that name nearby. Try the street address.</p>
-					{/if}
+					{#if searchFor === 'find'}{@render suggestions((address) => send({ action: 'address', address }))}{/if}
 					<div class="actions">
 						<button class="pill-button small" disabled={busy}>{busy ? 'Finding it…' : 'Use what I typed'}</button>
 					</div>

@@ -6,12 +6,13 @@ import type { LayoutServerLoad } from './$types';
 // row, and nothing is asked when no one is signed in.
 export const load: LayoutServerLoad = async ({ locals, cookies }) => {
 	if (!cookies.getAll().some((c) => c.name.startsWith('sb-'))) return {};
+	const guest = (await locals.getUser())?.guest ?? false;
 	const { data } = await locals.supabase.from('user_settings').select(DISPLAY_COLUMNS).maybeSingle();
-	if (!data) return {};
+	if (!data) return { guest };
 	const saved = fromRow(data);
 	if (displayCookie(saved) !== cookies.get(DISPLAY_COOKIE)) {
 		cookies.set(DISPLAY_COOKIE, displayCookie(saved), DISPLAY_COOKIE_OPTIONS);
 		locals.display = saved;
 	}
-	return {};
+	return { guest };
 };

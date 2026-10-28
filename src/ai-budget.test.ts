@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DAILY_CAP_MICROS, USER_DAILY_CAP_MICROS, costMicros, overDailyCap, overUserCap, NEW_ACCOUNTS_CAP_MICROS, overNewAccountsCap } from './ai-budget';
+import { DAILY_CAP_MICROS, USER_DAILY_CAP_MICROS, costMicros, overDailyCap, overUserCap, NEW_ACCOUNTS_CAP_MICROS, overNewAccountsCap, GUEST_CREDIT_FLOOR_MICROS, GUEST_DAILY_CAP_MICROS, guestLimit } from './ai-budget';
 
 describe('costMicros', () => {
 	it('prices input and output tokens separately at the catalog rate', () => {
@@ -40,5 +40,19 @@ describe('overNewAccountsCap', () => {
 
 	it('never stops an older account', () => {
 		expect(overNewAccountsCap(false, NEW_ACCOUNTS_CAP_MICROS * 10)).toBe(false);
+	});
+});
+
+describe('guestLimit', () => {
+	it('lets guests read under both limits', () => {
+		expect(guestLimit(GUEST_DAILY_CAP_MICROS - 1, GUEST_CREDIT_FLOOR_MICROS - 1)).toBeNull();
+	});
+
+	it('closes the day once the guest pool is spent', () => {
+		expect(guestLimit(GUEST_DAILY_CAP_MICROS, 0)).toBe('pool');
+	});
+
+	it('stops guests for good near the end of the credits, even on a quiet day', () => {
+		expect(guestLimit(0, GUEST_CREDIT_FLOOR_MICROS)).toBe('credits');
 	});
 });

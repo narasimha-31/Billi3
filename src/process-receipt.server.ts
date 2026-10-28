@@ -4,7 +4,8 @@ import { nameLines } from './item-names.server';
 import { myAisles } from './aisle-choice.server';
 import { AiUnavailable, BadAnswer } from './nebius.server';
 import { checkReading } from './receipt-check';
-import { readReceipt } from './receipt-reader.server';
+import { MODELS } from './ai-budget';
+import { readReceipt, type VisionRole } from './receipt-reader.server';
 import { itemRows } from './receipt-rows';
 import { assignProducts } from './product-merge.server';
 import { placeStore } from './store-place.server';
@@ -25,7 +26,7 @@ export type ProcessResult =
 	| { status: 'saved' | 'review'; skipped: number; printed: Printed }
 	| { status: 'failed'; problem: 'not_a_receipt' | 'handwritten' | 'no_lines' | 'bad_photo' }
 	| { status: 'busy' }
-	| { status: 'paused' };
+	| { status: 'paused'; note: string | null };
 
 // a read that has been "processing" this long crashed part way and may be claimed again
 const STALE_MS = 2 * 60 * 1000;
@@ -85,13 +86,17 @@ export async function processReceipt(supabase: SupabaseClient, userId: string, r
 		// free checks before any tokens are spent
 		if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff || sizeProblem(bytes)) return await fail('bad_photo');
 
-		let checked = checkReading(await readReceipt(bytes, userId));
+		let readBy: VisionRole = 'vision';
+		let checked = checkReading(await readReceipt(bytes, userId, undefined, (role) => (readBy = role)));
 		// the printed item count says a count was missed: the backup model reads it once more, and wins only if its count fits
 		if (checked.ok && checked.counts_match === false) {
 			const second = await readReceipt(bytes, userId, ['visionBackup'])
 				.then((reading) => checkReading(reading))
 				.catch(() => null);
-			if (second?.ok && second.counts_match) checked = second;
+			if (second?.ok && second.counts_match) {
+				checked = second;
+				readBy = 'visionBackup';
+			}
 		}
 		if (!checked.ok) return await fail(checked.reason);
 
@@ -164,6 +169,7 @@ export async function processReceipt(supabase: SupabaseClient, userId: string, r
 			tax_cents: checked.taxCents,
 			total_cents: checked.totalCents,
 			skipped_lines: skipped,
+			read_by: MODELS[readBy].id,
 			image_path: keepPhoto ? photoPath : null
 		});
 		const printed: Printed = {
@@ -177,7 +183,7 @@ export async function processReceipt(supabase: SupabaseClient, userId: string, r
 	} catch (error) {
 		if (error instanceof AiUnavailable) {
 			await finish({ status: 'pending' });
-			return { status: 'paused' };
+			return { status: 'paused', note: error.note };
 		}
 		// every model lost its way in the photo; trying it again would only spend more
 		if (error instanceof BadAnswer) return await fail('bad_photo');

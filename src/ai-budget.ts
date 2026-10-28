@@ -52,3 +52,26 @@ export function overNewAccountsCap(isNew: boolean, newSpentTodayMicros: number) 
 export function overUserCap(userSpentTodayMicros: number) {
 	return userSpentTodayMicros >= USER_DAILY_CAP_MICROS;
 }
+
+// Guests share $1.50 a day of their own, about 135 reads, and stop for good once $22 of the $25 in
+// credits is gone, so shoppers keep reading after the judging ends.
+export const GUEST_DAILY_CAP_MICROS = 1_500_000;
+export const GUEST_CREDIT_FLOOR_MICROS = 22_000_000;
+
+export function guestLimit(guestSpentTodayMicros: number, everSpentMicros: number): 'pool' | 'credits' | null {
+	if (everSpentMicros >= GUEST_CREDIT_FLOOR_MICROS) return 'credits';
+	if (guestSpentTodayMicros >= GUEST_DAILY_CAP_MICROS) return 'pool';
+	return null;
+}
+
+export const GUEST_LIMIT_NOTES = {
+	pool: 'Guest reads are used up for today. More open up tomorrow. You can still explore the sample receipts.',
+	credits: 'Guest reading has ended for this event. You can still explore the sample receipts.'
+};
+
+// the names people know the reading models by
+const READER_NAMES: Record<string, string> = {
+	[MODELS.vision.id]: 'Kimi K2.7',
+	[MODELS.visionBackup.id]: 'NVIDIA Nemotron 3.5 Super VL'
+};
+export const readerName = (id: string) => READER_NAMES[id] ?? id;

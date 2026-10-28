@@ -163,7 +163,7 @@
 				</div>
 			</div>
 		</div>
-		<p class="note" bind:this={note}>Screens from a sample shopper. <a href="/demo">Open the demo</a> to try it yourself.</p>
+		<p class="note" bind:this={note}>Screens from a sample shopper. <a href="/demo">Try it live</a>, no sign-in needed.</p>
 	</div>
 </section>
 

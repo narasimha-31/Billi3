@@ -138,6 +138,12 @@
 				<AccountMenu {firstName} />
 			</div>
 		</div>
+		{#if page.data.guest}
+			<form class="guest" method="POST" action="/?/endguest">
+				<span>Guest session. Everything here is deleted 3 hours after it started.</span>
+				<button>End session</button>
+			</form>
+		{/if}
 	</header>
 
 	<div class="page" class:entering>
@@ -147,6 +153,29 @@
 </div>
 
 <style>
+	.guest {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem 0.75rem;
+		border-top: 1px solid var(--color-line);
+		padding: 0.4rem var(--gutter);
+		font-size: 0.8125rem;
+		color: var(--color-muted);
+	}
+
+	.guest button {
+		font-weight: 600;
+		color: var(--color-accent);
+	}
+
+	.guest button:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
 	.end {
 		position: relative;
 		display: flex;

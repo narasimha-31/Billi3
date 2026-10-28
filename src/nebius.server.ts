@@ -1,16 +1,18 @@
 import { NEBIUS_API_KEY } from '$env/static/private';
 import { admin } from './admin.server';
-import { MODELS, costMicros, overDailyCap, overNewAccountsCap, overUserCap, type ModelRole } from './ai-budget';
+import { GUEST_LIMIT_NOTES, MODELS, costMicros, guestLimit, overDailyCap, overNewAccountsCap, overUserCap, type ModelRole } from './ai-budget';
 
 const BASE_URL = 'https://api.tokenfactory.nebius.com/v1';
 
 if (NEBIUS_API_KEY.length < 20) throw new Error('NEBIUS_API_KEY is missing or too short');
 
-// the provider is down, slow or unreachable, or (budget) the daily AI budget is spent
+// the provider is down, slow or unreachable, or (budget) the daily AI budget is spent; a note is
+// what to tell the person when the usual "try again later" would be false hope
 export class AiUnavailable extends Error {
 	constructor(
 		message: string,
-		readonly budget = false
+		readonly budget = false,
+		readonly note: string | null = null
 	) {
 		super(message);
 	}
@@ -27,8 +29,16 @@ type Request = { role: ModelRole; purpose: string; userId: string | null; messag
 async function spentToday(userId: string | null) {
 	const { data, error } = await admin.rpc('ai_spent_today', { p_user_id: userId });
 	if (error) throw error;
-	const row = (data as { all_micros: number; user_micros: number; new_micros: number; user_is_new: boolean }[])[0];
-	return { all: Number(row?.all_micros ?? 0), mine: Number(row?.user_micros ?? 0), fresh: Number(row?.new_micros ?? 0), isNew: !!row?.user_is_new };
+	const row = (data as { all_micros: number; user_micros: number; new_micros: number; user_is_new: boolean; guest_micros: number; user_is_guest: boolean; ever_micros: number }[])[0];
+	return {
+		all: Number(row?.all_micros ?? 0),
+		mine: Number(row?.user_micros ?? 0),
+		fresh: Number(row?.new_micros ?? 0),
+		isNew: !!row?.user_is_new,
+		guests: Number(row?.guest_micros ?? 0),
+		isGuest: !!row?.user_is_guest,
+		ever: Number(row?.ever_micros ?? 0)
+	};
 }
 
 // Whether this model's last call in the past three minutes failed. A model that is down then
@@ -67,8 +77,21 @@ async function post(body: object, deadline: number, path = 'chat/completions') {
 
 type Usage = { prompt_tokens?: number; completion_tokens?: number };
 
+// for a guest, why reading is closed to every guest right now, before they add a photo
+export async function guestsClosed(userId: string) {
+	const spent = await spentToday(userId);
+	const limit = spent.isGuest ? guestLimit(spent.guests, spent.ever) : null;
+	return limit ? GUEST_LIMIT_NOTES[limit] : null;
+}
+
 async function checkBudget(userId: string | null) {
 	const spent = await spentToday(userId);
+	if (spent.isGuest) {
+		const limit = guestLimit(spent.guests, spent.ever);
+		if (limit) throw new AiUnavailable(`guest ${limit} limit reached`, true, GUEST_LIMIT_NOTES[limit]);
+		if (overUserCap(spent.mine)) throw new AiUnavailable('daily AI budget for this guest reached', true, "You've used your guest reads for today. Everything you added is still here to explore.");
+		return;
+	}
 	if (overDailyCap(spent.all)) throw new AiUnavailable('daily AI budget reached', true);
 	if (overUserCap(spent.mine)) throw new AiUnavailable('daily AI budget for this person reached', true);
 	if (overNewAccountsCap(spent.isNew, spent.fresh)) throw new AiUnavailable('daily AI budget for new accounts reached', true);

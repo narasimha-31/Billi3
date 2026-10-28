@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { tick } from 'svelte';
+	import { readerName } from '../../../ai-budget';
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -17,33 +19,76 @@
 	// the aisle each line is set to on this page, so its icon follows the menu
 	let picked = $state<Record<string, string>>({});
 
-	// "Which one?": this receipt's branch, changed for this receipt only
+	// "Which one?": this receipt's branch, changed for this receipt only. It opens on the shopper's own
+	// branches, then the store's others near their ZIP, nearest first; typing narrows the list and adds
+	// addresses and places like it. A tap saves it.
+	type Spot = { key: string; name: string | null; address: string | null; lat?: number; lng?: number; miles: number; visits?: number; away?: boolean; mine: boolean; found?: boolean };
 	let choosing = $state(false);
 	let nearby = $state<{ lat: number; lng: number; address: string | null; miles: number }[] | null>(null);
 	let finding = $state(false);
-	let typingBranch = $state(false);
 	let sheetStore = $state<string | null>(null);
 	const branchLabel = (b: { address: string | null; miles: number; away?: boolean }) =>
 		[streetOf(b.address) ?? 'This branch', b.away ? (townOf(b.address) ?? 'away') : shortMiles(b.miles)].join(' · ');
-	const near = (a: { lat: number; lng: number }, b: { lat: number; lng: number } | null) => !!b && Math.abs(a.lat - b.lat) < 0.001 && Math.abs(a.lng - b.lng) < 0.001;
-	// the shopper's other branches first, then ones found on the map that are not already listed
-	const options = $derived([
-		...data.otherBranches,
-		...(nearby ?? []).filter((n) => !data.otherBranches.some((b) => near(n, b)) && !near(n, data.branch))
-	]);
+	const near = (a: { lat?: number; lng?: number }, b: { lat: number; lng: number } | null) =>
+		!!b && a.lat !== undefined && a.lng !== undefined && Math.abs(a.lat - b.lat) < 0.001 && Math.abs(a.lng - b.lng) < 0.001;
+
+	let typedText = $state('');
+	let suggested = $state<{ name: string | null; address: string; lat?: number; lng?: number; miles: number }[]>([]);
+	const spots = $derived.by(() => {
+		const words = typedText.toLowerCase().split(/\s+/).filter(Boolean);
+		const fits = (s: Spot) => words.every((w) => `${s.name ?? ''} ${s.address ?? ''}`.toLowerCase().includes(w));
+		const mine: Spot[] = data.otherBranches.map((b) => ({ ...b, key: `${b.lat},${b.lng}`, name: null, mine: true }));
+		const seen: { lat: number; lng: number }[] = [...data.otherBranches, ...(data.branch ? [data.branch] : [])];
+		const others: Spot[] = [];
+		const fromSearch = new Set<object>(suggested);
+		for (const n of [...(nearby ?? []).map((n) => ({ ...n, name: null })), ...suggested]) {
+			if (n.lat === undefined || n.lng === undefined || seen.some((s) => near(n, s))) continue;
+			seen.push({ lat: n.lat, lng: n.lng });
+			others.push({ ...n, key: `${n.lat},${n.lng}`, mine: false, found: fromSearch.has(n) });
+		}
+		const byMiles = (a: Spot, b: Spot) => a.miles - b.miles;
+		// suggestions already match what was typed, in their own words
+		return [...mine.filter(fits).sort(byMiles), ...others.filter((o) => o.found || fits(o)).sort(byMiles)];
+	});
 	const branchPicked: SubmitFunction = () => async ({ update, result }) => {
 		await update({ reset: false });
 		if (result.type === 'success') {
 			choosing = false;
-			typingBranch = false;
+			typedText = '';
+			suggested = [];
 		}
 	};
 
-	async function findNearby() {
-		if (!r.store_id) return;
+	let typedForm = $state<HTMLFormElement>();
+	let pickedForm = $state<HTMLFormElement>();
+	let pickedPlace = $state<{ lat: number; lng: number; address: string } | null>(null);
+	let suggestTimer: ReturnType<typeof setTimeout> | undefined;
+	function suggest() {
+		clearTimeout(suggestTimer);
+		const text = typedText.trim();
+		if (!r.store_id || text.length < 3) {
+			suggested = [];
+			return;
+		}
+		suggestTimer = setTimeout(async () => {
+			const response = await fetch(`/stores/${r.store_id}/nearby?q=${encodeURIComponent(text)}`).catch(() => null);
+			const answer = response?.ok ? await response.json() : { places: [] };
+			if (text === typedText.trim()) suggested = answer.places ?? [];
+		}, /^\d/.test(text) ? 300 : 700);
+	}
+	async function pick(spot: Spot) {
+		if (spot.lat === undefined || spot.lng === undefined || !spot.address) return;
+		pickedPlace = { lat: spot.lat, lng: spot.lng, address: spot.address };
+		await tick();
+		pickedForm?.requestSubmit();
+	}
+
+	async function open() {
+		choosing = !choosing;
+		if (!choosing || nearby !== null || !r.store_id) return;
 		finding = true;
-		const response = await fetch(`/stores/${r.store_id}/nearby`);
-		nearby = response.ok ? (await response.json()).branches : [];
+		const response = await fetch(`/stores/${r.store_id}/nearby`).catch(() => null);
+		nearby = response?.ok ? (await response.json()).branches : [];
 		finding = false;
 	}
 
@@ -94,50 +139,42 @@
 						{:else}
 							<span class="unknown">Branch not known</span>
 						{/if}
-						<button type="button" class="change" aria-expanded={choosing} onclick={() => (choosing = !choosing)}>{choosing ? 'Done' : data.branch ? 'Change' : 'Add it'}</button>
+						<button type="button" class="change" aria-expanded={choosing} onclick={open}>{choosing ? 'Done' : data.branch ? 'Change' : 'Add it'}</button>
 					</div>
 					{#if choosing}
 						<div class="which" transition:slide={{ duration: prefersReducedMotion.current ? 0 : 220 }}>
 							<p class="which-title">Which {storeName(r.store)}?</p>
-							<ul>
-								{#if data.branch?.guess}
+							{#if data.branch?.guess}
+								<form method="POST" action="?/branch" use:enhance={branchPicked}>
+									<input type="hidden" name="lat" value={data.branch.lat} />
+									<input type="hidden" name="lng" value={data.branch.lng} />
+									<input type="hidden" name="address" value={data.branch.address} />
+									<button class="option"><span>{branchLabel(data.branch)}</span><span class="note">Yes, this one</span></button>
+								</form>
+							{/if}
+							<!-- Enter with nothing picked looks up the address as typed -->
+							<form class="typed" method="POST" action="?/branch" use:enhance={branchPicked} bind:this={typedForm}>
+								<input name="typed" type="search" bind:value={typedText} oninput={suggest} placeholder="Search a street or store near you" autocomplete="off" maxlength="200" aria-label="Search a street or store" />
+							</form>
+							<form method="POST" action="?/branch" use:enhance={branchPicked} bind:this={pickedForm} hidden>
+								<input type="hidden" name="lat" value={pickedPlace?.lat} />
+								<input type="hidden" name="lng" value={pickedPlace?.lng} />
+								<input type="hidden" name="address" value={pickedPlace?.address} />
+							</form>
+							<ul class="spots">
+								{#each spots as spot (spot.key)}
 									<li>
-										<form method="POST" action="?/branch" use:enhance={branchPicked}>
-											<input type="hidden" name="lat" value={data.branch.lat} />
-											<input type="hidden" name="lng" value={data.branch.lng} />
-											<input type="hidden" name="address" value={data.branch.address} />
-											<button class="option"><span>{branchLabel(data.branch)}</span><span class="note">Yes, this one</span></button>
-										</form>
-									</li>
-								{/if}
-								{#each options as option (`${option.lat},${option.lng}`)}
-									<li>
-										<form method="POST" action="?/branch" use:enhance={branchPicked}>
-											<input type="hidden" name="lat" value={option.lat} />
-											<input type="hidden" name="lng" value={option.lng} />
-											<input type="hidden" name="address" value={option.address} />
-											<button class="option">
-												<span>{branchLabel(option)}</span>
-												{#if 'visits' in option}<span class="note">{option.visits} {option.visits === 1 ? 'visit' : 'visits'}</span>{/if}
-											</button>
-										</form>
+										<button type="button" class="option" onclick={() => pick(spot)}>
+											<span>{spot.name ?? streetOf(spot.address) ?? 'Branch'}<small>{spot.address}</small></span>
+											<span class="note">{spot.mine ? 'Yours · ' : ''}{spot.away ? (townOf(spot.address) ?? 'away') : shortMiles(spot.miles)}</span>
+										</button>
 									</li>
 								{/each}
-								{#if nearby === null}
-									<li><button type="button" class="option quiet" disabled={finding} onclick={findNearby}>{finding ? 'Looking on the map…' : 'Find others nearby'}</button></li>
-								{:else if nearby.length === 0}
-									<li class="none">No other branches found near your ZIP.</li>
+								{#if finding}
+									<li class="none">Looking near your ZIP…</li>
+								{:else if !spots.length}
+									<li class="none">{typedText.trim() ? 'Nothing near you matches yet. Keep typing the street, or press Enter.' : 'No branches found near your ZIP. Search the street above.'}</li>
 								{/if}
-								<li>
-									{#if typingBranch}
-										<form class="typed" method="POST" action="?/branch" use:enhance={branchPicked}>
-											<input name="typed" placeholder="Street, city and state" autocomplete="off" maxlength="200" required />
-											<button class="pill-button small">Save</button>
-										</form>
-									{:else}
-										<button type="button" class="option quiet" onclick={() => (typingBranch = true)}>Type the address</button>
-									{/if}
-								</li>
 							</ul>
 							{#if form?.branchProblem}<p class="branch-problem" role="alert">{form.branchProblem}</p>{/if}
 						</div>
@@ -190,6 +227,9 @@
 							{r.skipped_lines}
 							{r.skipped_lines === 1 ? 'line was' : 'lines were'} left out because {r.skipped_lines === 1 ? "it wasn't" : "they weren't"} a grocery item.
 						</p>
+					{/if}
+					{#if r.read_by}
+						<p class="note">Read by {readerName(r.read_by)} on Nebius Token Factory.</p>
 					{/if}
 				</div>
 
@@ -411,10 +451,6 @@
 		transition-duration: 0s;
 	}
 
-	.option.quiet {
-		color: var(--color-accent);
-	}
-
 	.note,
 	.none {
 		font-size: 0.8125rem;
@@ -442,15 +478,16 @@
 		font-size: 1rem;
 	}
 
-	.pill-button.small {
-		padding: 0.4rem 0.9rem;
-		font-size: 0.875rem;
-	}
-
 	.branch-problem {
 		padding: 0 0.9rem 0.75rem;
 		font-size: 0.875rem;
 		color: var(--color-danger);
+	}
+
+	.spots small {
+		display: block;
+		font-size: 0.8125rem;
+		color: var(--color-muted);
 	}
 
 	.address {

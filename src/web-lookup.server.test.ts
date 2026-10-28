@@ -2,19 +2,26 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const env = vi.hoisted(() => ({ TAVILY_API_KEY: 'tvly-test-key' as string | undefined }));
 const logged = vi.hoisted(() => [] as unknown[]);
-const today = vi.hoisted(() => ({ count: 0 }));
+const today = vi.hoisted(() => ({ count: 0, guest: false, guests: 0 }));
 vi.mock('$env/dynamic/private', () => ({ env }));
 vi.mock('./admin.server', () => {
 	const counted = { eq: () => counted, gte: async () => ({ count: today.count, error: null }) };
-	return { admin: { from: () => ({ insert: async (row: unknown) => (logged.push(row), { error: null }), select: () => counted }) } };
+	return {
+		admin: {
+			from: () => ({ insert: async (row: unknown) => (logged.push(row), { error: null }), select: () => counted }),
+			rpc: async (name: string) => ({ data: name === 'is_guest' ? today.guest : today.guests, error: null })
+		}
+	};
 });
 
-import { SEARCHES_PER_DAY, tavily } from './web-lookup.server';
+import { GUEST_SEARCHES_ALL, GUEST_SEARCHES_PER_DAY, SEARCHES_PER_DAY, tavily } from './web-lookup.server';
 
 afterEach(() => {
 	vi.unstubAllGlobals();
 	logged.length = 0;
 	today.count = 0;
+	today.guest = false;
+	today.guests = 0;
 	env.TAVILY_API_KEY = 'tvly-test-key';
 });
 
@@ -26,6 +33,24 @@ describe('tavily', () => {
 		vi.stubGlobal('fetch', fetch);
 		today.count = SEARCHES_PER_DAY;
 		expect(await search('user-1')).toBeNull();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('stops a guest at the guest share, which is smaller', async () => {
+		const fetch = vi.fn();
+		vi.stubGlobal('fetch', fetch);
+		today.guest = true;
+		today.count = GUEST_SEARCHES_PER_DAY;
+		expect(await search('guest-1')).toBeNull();
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('stops every guest once guests together used the day', async () => {
+		const fetch = vi.fn();
+		vi.stubGlobal('fetch', fetch);
+		today.guest = true;
+		today.guests = GUEST_SEARCHES_ALL;
+		expect(await search('guest-1')).toBeNull();
 		expect(fetch).not.toHaveBeenCalled();
 	});
 

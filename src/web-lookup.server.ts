@@ -6,8 +6,21 @@ import { placeStore } from './store-place.server';
 
 export type Found = { title: string; content: string; url: string; published: string | null };
 
-// searches a shopper can set off in a day; each one is a paid call
+// searches a shopper can set off in a day; each one is a paid call. Guests get fewer, from a pool of their own.
 export const SEARCHES_PER_DAY = 20;
+export const GUEST_SEARCHES_PER_DAY = 10;
+export const GUEST_SEARCHES_ALL = 100;
+
+// why a person can't search now, if they can't
+export async function searchClosed(userId: string): Promise<'mine' | 'guests' | null> {
+	const [mine, guest] = await Promise.all([searchedToday(userId), admin.rpc('is_guest', { p_user_id: userId })]);
+	if (guest.error) throw guest.error;
+	if (!guest.data) return mine >= SEARCHES_PER_DAY ? 'mine' : null;
+	if (mine >= GUEST_SEARCHES_PER_DAY) return 'mine';
+	const all = await admin.rpc('guest_searches_today');
+	if (all.error) throw all.error;
+	return Number(all.data) >= GUEST_SEARCHES_ALL ? 'guests' : null;
+}
 
 async function searchedToday(userId: string) {
 	const { count, error } = await admin
@@ -25,7 +38,7 @@ async function searchedToday(userId: string) {
 export async function tavily(query: string, results: number, length: number, purpose: string, userId: string | null, signal: AbortSignal, extra: Record<string, unknown> = {}): Promise<Found[] | null> {
 	const key = env.TAVILY_API_KEY;
 	if (!key) return null;
-	if (userId && (await searchedToday(userId)) >= SEARCHES_PER_DAY) return null;
+	if (userId && (await searchClosed(userId))) return null;
 	const started = Date.now();
 	let found: Found[] | null = null;
 	try {

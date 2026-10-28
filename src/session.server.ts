@@ -7,7 +7,8 @@ import {
 	type UserMetadata
 } from '@supabase/supabase-js';
 
-export type User = { id: string; email: string | null; user_metadata: UserMetadata };
+// guest is set by the server alone (app metadata), so no one can make themselves one or stop being one
+export type User = { id: string; email: string | null; user_metadata: UserMetadata; guest: boolean };
 
 // Bad, expired, forged or replayed credentials mean "not signed in".
 // Anything else (Supabase down, network failure) is a real error and is thrown.
@@ -30,8 +31,8 @@ export async function currentUser(supabase: SupabaseClient): Promise<User | null
 		throw error;
 	}
 	if (!data) return null;
-	const { sub, email, user_metadata } = data.claims;
-	return { id: sub, email: email ?? null, user_metadata: user_metadata ?? {} };
+	const { sub, email, user_metadata, app_metadata } = data.claims;
+	return { id: sub, email: email ?? null, user_metadata: user_metadata ?? {}, guest: app_metadata?.guest === true };
 }
 
 export async function signInWithCode(supabase: SupabaseClient, code: string): Promise<boolean> {

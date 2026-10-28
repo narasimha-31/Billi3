@@ -83,9 +83,10 @@
 				<li><a href="#scene-{s.id}" class:on={scene === i} aria-current={scene === i ? 'step' : undefined}>{s.label}</a></li>
 			{/each}
 		</ol>
+		<!-- both ways in stay in sight wherever the page is, for anyone trying it for the first time -->
 		<nav>
-			<a class="wide-only" href="/demo">Try the demo</a>
-			<a href="/privacy">Privacy</a>
+			<a href="#start">Sign in</a>
+			<a class="live" href="/demo">Try it live</a>
 		</nav>
 	</div>
 </header>
@@ -131,7 +132,7 @@
 		<h2>Start with your <span class="hl">last receipt.</span></h2>
 		<div class="actions">
 			<GoogleButton />
-			<a class="quiet" href="/demo">Try the demo</a>
+			<a class="quiet" href="/demo">Try it live, no sign-in</a>
 		</div>
 	</section>
 </main>
@@ -144,7 +145,7 @@
 	<nav aria-label="Footer">
 		<div>
 			<h2>Product</h2>
-			<a href="/demo">Try the demo</a>
+			<a href="/demo">Try it live</a>
 			<a href="#start">Sign in</a>
 		</div>
 		<div>
@@ -221,8 +222,7 @@
 
 	/* on a phone the bar is solid, so the page never shows through it, and the demo lives in the page */
 	@media (max-width: 759px) {
-		.scenes,
-		.wide-only {
+		.scenes {
 			display: none;
 		}
 
@@ -260,9 +260,18 @@
 
 	.bar nav {
 		display: flex;
+		align-items: center;
 		margin-left: auto;
-		gap: 1.5rem;
+		gap: 1.25rem;
 		font-size: 1rem;
+	}
+
+	.bar nav .live {
+		border-radius: 999px;
+		background: var(--color-accent);
+		padding: 0.45rem 1rem;
+		font-weight: 600;
+		color: #fff;
 	}
 
 	.bar nav a,
@@ -272,7 +281,7 @@
 	}
 
 	@media (hover: hover) {
-		.bar nav a:hover,
+		.bar nav a:not(.live):hover,
 		.fine:hover {
 			color: var(--color-accent);
 		}

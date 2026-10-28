@@ -18,7 +18,7 @@
 		],
 		[
 			'Store map: off until you turn it on.',
-			'Then we keep your ZIP code, never your address. To find a store’s branches, OpenStreetMap gets the store’s name and an area about 35 miles across, not your ZIP. A store address on a receipt, or one you type, goes to the US Census map lookup. Map pictures come through our server, so the map site never sees you. Directions open Google Maps only when you tap them.'
+			'Then we keep your ZIP code, never your address. To find a store’s branches, OpenStreetMap gets the store’s name and an area about 35 miles across, not your ZIP. While you type a store or street, what you typed and a point about a kilometre from your ZIP’s centre go to Photon, an OpenStreetMap search, to suggest places near you. A store address on a receipt, or one you type, goes to the US Census map lookup. Map pictures come through our server, so the map site never sees you. Directions open Google Maps only when you tap them.'
 		],
 		['Cookies only keep you signed in.', 'No tracking or ad cookies, which is why there is no cookie banner.'],
 		['Only you can see your receipts.', 'Locked to your account in the database itself. Delete your account in Settings and every receipt goes with it.']
@@ -38,7 +38,7 @@
 				<a href="/home" class="demo">Home</a>
 			{:else}
 				<Wordmark />
-				<a href="/demo" class="demo">Try the demo</a>
+				<a href="/demo" class="demo">Try it live</a>
 			{/if}
 		</div>
 	</header>

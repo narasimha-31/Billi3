@@ -173,8 +173,7 @@
 				</div>
 			{:else}
 				<p class="lead">
-					Your prices show up here once a receipt is read. <a href="/home">Add a receipt</a> or
-					<a href="/demo">see how it looks</a> with a sample shopper.
+					Your prices show up here once a receipt is read. <a href="/home">Add a receipt</a>.
 				</p>
 			{/if}
 		</div>

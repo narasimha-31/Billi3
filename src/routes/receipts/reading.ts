@@ -25,9 +25,9 @@ export async function readReceipt(id: string): Promise<Outcome> {
 	body.set('id', id);
 	const result = await post('process', body);
 	if (result.type !== 'success' || !result.data) return { state: 'failed', note: 'Try again in a moment.' };
-	const outcome = result.data as { status: string; problem?: string; printed?: Printed };
+	const outcome = result.data as { status: string; problem?: string; note?: string | null; printed?: Printed };
 	if (outcome.status === 'saved' || outcome.status === 'review') return { state: outcome.status, printed: outcome.printed };
-	if (outcome.status === 'paused') return { state: 'paused' };
+	if (outcome.status === 'paused') return { state: 'paused', note: outcome.note ?? undefined };
 	if (outcome.status === 'busy') return { state: 'reading', note: 'It is already being read.' };
 	// these give their daily slot back, so the shopper is told they cost nothing
 	const known = problems[outcome.problem ?? ''];
@@ -43,7 +43,7 @@ export function announce(id: string, outcome: Outcome) {
 		const total = outcome.printed?.totalCents;
 		toast({ key: `read:${id}`, kind: 'done', text: `${store ?? 'Your'} receipt is ready${total != null ? ` · ${money(total)}` : ''}`, action: open });
 	} else if (outcome.state === 'review') toast({ key: `read:${id}`, kind: 'done', text: `${store ?? 'A'} receipt needs a quick look`, action: open });
-	else if (outcome.state === 'paused') toast({ key: `read:${id}`, kind: 'error', text: 'Reading is paused. The photo is saved to try later.' });
+	else if (outcome.state === 'paused') toast({ key: `read:${id}`, kind: 'error', text: outcome.note ?? 'Reading is paused. The photo is saved to try later.' });
 	else if (outcome.state === 'failed')
 		toast({
 			key: `read:${id}`,

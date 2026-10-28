@@ -188,7 +188,7 @@
 				</div>
 				{#if firstTime}
 					<section class="add surface" aria-label="Add a receipt">
-						<ReceiptUploader uploads={data.uploads} dailyLimit={data.dailyLimit} paused={data.paused} />
+						<ReceiptUploader uploads={data.uploads} dailyLimit={data.dailyLimit} paused={data.paused} closed={data.closed} />
 					</section>
 				{/if}
 

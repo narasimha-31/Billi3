@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { uploadWindow } from '../../save-photo.server';
 import { firstNameOf } from '../../session.server';
 import type { Actions, PageServerLoad } from './$types';
+import { guestsClosed } from '../../nebius.server';
 import { readingPaused } from '../../receipt-reader.server';
 import type { Paid } from '../../price-change';
 import { byAisle } from '../../spend';
@@ -33,6 +34,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const user = await locals.getUser();
 	if (!user) redirect(303, '/');
 	const paused = readingPaused();
+	const closed = user.guest ? guestsClosed(user.id) : null;
 
 	const today = new Date().toISOString().slice(0, 10);
 	const monthStart = `${today.slice(0, 7)}-01`;
@@ -77,6 +79,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		uploads: uploadWindow(uploaded.data),
 		dailyLimit: uploadWindow(uploaded.data).limit,
 		paused: await paused,
+		closed: await closed,
 		tour: !settings.data?.tour_seen,
 		budgetCents: (settings.data?.monthly_budget_cents as number | null) ?? null,
 		month: {

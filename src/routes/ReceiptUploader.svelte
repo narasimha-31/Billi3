@@ -4,6 +4,7 @@
 	import { canAdd, cannotOpen, isPdf, prepareUpload } from './receipts/prepare-photo';
 	import { SHARP_ENOUGH } from './receipts/photo-rules';
 	import { onDestroy, onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { handoff } from './receipts/handoff';
 	import { announce, post, readReceipt, type Printed } from './receipts/reading';
 
@@ -11,8 +12,12 @@
 		uploads,
 		dailyLimit,
 		paused = false,
+		closed = null,
 		onreading
-	}: { uploads: { used: number; freesAt: string | null }; dailyLimit: number; paused?: boolean; onreading?: (id: string, busy: boolean) => void } = $props();
+	}: { uploads: { used: number; freesAt: string | null }; dailyLimit: number; paused?: boolean; closed?: string | null; onreading?: (id: string, busy: boolean) => void } = $props();
+	const guest = $derived(page.data.guest === true);
+	// nothing more can be read today, so no photo is taken in only to wait
+	const shut = $derived(!!closed || (guest && uploads.used >= dailyLimit));
 
 	// the time is shown in the browser's own timezone, so it is only written once the page is running there
 	let opensAt = $state('');
@@ -163,7 +168,7 @@
 
 <div class="uploader">
 	<!-- phones open the back camera straight away; the picker stays for saved photos and PDFs -->
-	<button type="button" class="camera" onclick={() => camera.click()}>
+	<button type="button" class="camera" disabled={shut} onclick={() => camera.click()}>
 		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
 		Scan a receipt
 	</button>
@@ -182,6 +187,7 @@
 		type="button"
 		class="drop"
 		class:dragging
+		disabled={shut}
 		onclick={() => picker.click()}
 		ondragover={(e) => {
 			e.preventDefault();
@@ -205,15 +211,23 @@
 			e.currentTarget.value = '';
 		}}
 	/>
-	{#if paused}
+	{#if closed}
+		<p class="paused" role="status">{closed}</p>
+	{:else if guest && uploads.used >= dailyLimit}
+		<p class="paused" role="status">You’ve used your {dailyLimit} guest reads for today. Everything you added is still here to explore.</p>
+	{:else if paused}
 		<p class="paused" role="status">Reading is paused for a few minutes. Photos you add are kept to read later.</p>
 	{/if}
 	{#if overCap}
 		<p class="paused" role="status">{overCap}</p>
 	{/if}
 	<p class="limits">
-		{uploads.used} of {dailyLimit} receipts in the last 24 hours.
-		{opensAt ? `The next one opens ${opensAt}.` : 'Photos and PDFs up to 5 MB.'}
+		{#if guest}
+			{Math.max(0, dailyLimit - uploads.used)} of {dailyLimit} guest reads left. Photos and PDFs up to 5 MB.
+		{:else}
+			{uploads.used} of {dailyLimit} receipts in the last 24 hours.
+			{opensAt ? `The next one opens ${opensAt}.` : 'Photos and PDFs up to 5 MB.'}
+		{/if}
 	</p>
 
 	{#if entries.length}
@@ -276,7 +290,7 @@
 						</div>
 					{:else}
 						<p class="message" class:bad={entry.state === 'failed'}>
-							{messages[entry.state] ?? ''}{entry.note ? ` ${entry.note}` : ''}
+							{entry.state === 'paused' && entry.note ? entry.note : `${messages[entry.state] ?? ''}${entry.note ? ` ${entry.note}` : ''}`}
 						</p>
 					{/if}
 				</li>
@@ -448,6 +462,12 @@
 		font-size: 0.9375rem;
 		font-weight: 500;
 		color: #fff;
+	}
+
+	.camera:disabled,
+	.drop:disabled {
+		opacity: 0.45;
+		pointer-events: none;
 	}
 
 	.paused {
