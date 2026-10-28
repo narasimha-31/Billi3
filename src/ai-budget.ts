@@ -5,7 +5,9 @@ export const MODELS = {
 	// Oct 16 bake-off of all 9 image models on three real crumpled receipts, three runs each: Kimi K2.7
 	// Code read 129 of 129 lines with every total adding up (median 4.5 s, slowest 9.0 s). Kimi K3
 	// was faster but five times the price and glued weight lines into names; Qwen added 23 lines.
-	vision: { id: 'moonshotai/Kimi-K2.7-Code', input: 0.95, output: 4, seconds: 10 },
+	// Oct 28: its good reads took 4.6 s at the median but up to 18.5 s on long receipts, and every read cut at
+	// 10 s also marked it down for everyone, so it gets 20; the backup still answers within 10.
+	vision: { id: 'moonshotai/Kimi-K2.7-Code', input: 0.95, output: 4, seconds: 20 },
 	// Nemotron 3.5 Super VL as the backup: 114 of 129 in the same bake-off at under a third of the price
 	visionBackup: { id: 'nvidia/Nemotron-3.5-Super-VL', input: 0.3, output: 0.9, seconds: 10 },
 	// Super over Lightning: in a side-by-side on real receipt lines Lightning merged shampoo and chicken
