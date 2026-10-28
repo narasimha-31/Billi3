@@ -68,7 +68,7 @@ export async function tavily(query: string, results: number, length: number, pur
 const STORE_RESULTS = 5;
 const STORE_MS = 6000;
 // addresses checked on the map per search, and how far one may be from the shopper's ZIP
-const MOST_ADDRESSES = 4;
+const MOST_ADDRESSES = 8;
 const NEAR_MILES = 40;
 
 // the town around the ZIP's centre, so a store's name can be searched where the shopper lives
@@ -97,8 +97,13 @@ export async function storeOnWeb(name: string, you: Point, userId: string | null
 	if (!found) return [];
 	const addresses = addressesIn(found.map((r) => `${r.title} ${r.content}`).join(' ')).slice(0, MOST_ADDRESSES);
 	const placed = await Promise.all(addresses.map(async (address) => ({ address, point: await placeStore(address) })));
-	return placed
-		.flatMap(({ address, point }) => (point ? [{ name, address, miles: milesBetween(you, point) }] : []))
+	// several pages often list one shop, written differently; one point is one place
+	const unique = new Map<string, { name: string; address: string; lat: number; lng: number; miles: number }>();
+	for (const { address, point } of placed) {
+		const key = point && `${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
+		if (key && !unique.has(key)) unique.set(key, { name, address, lat: point.lat, lng: point.lng, miles: milesBetween(you, point) });
+	}
+	return [...unique.values()]
 		.filter((place) => place.miles <= NEAR_MILES)
 		.sort((a, b) => a.miles - b.miles);
 }

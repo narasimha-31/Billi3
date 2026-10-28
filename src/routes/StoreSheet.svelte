@@ -176,16 +176,15 @@
 								class="where"
 								onsubmit={(e) => {
 									e.preventDefault();
-									send({ action: 'move', key: branch.key, address: fixed });
+									if (places?.[0] && searchFor === branch.key) send({ action: 'move', key: branch.key, address: places[0].address });
 								}}
 							>
 								<label>
 									<span>The right address for this branch</span>
-									<input bind:value={fixed} oninput={() => search(fixed, branch.key)} placeholder="Street, city and state" autocomplete="off" maxlength="200" required disabled={busy} />
+									<input bind:value={fixed} oninput={() => search(fixed, branch.key)} placeholder="Search the street near you" autocomplete="off" maxlength="200" required disabled={busy} />
 								</label>
 								{#if searchFor === branch.key}{@render suggestions((address) => send({ action: 'move', key: branch.key, address }))}{/if}
 								<div class="actions">
-									<button class="pill-button small" disabled={busy}>{busy ? 'Finding it…' : 'Save'}</button>
 									<button type="button" class="text" onclick={() => (fixing = null)}>Cancel</button>
 								</div>
 							</form>
@@ -211,7 +210,8 @@
 					class="where"
 					onsubmit={(e) => {
 						e.preventDefault();
-						send({ action: 'address', address: typing ?? '' });
+						// nothing typed is saved as it is: Enter takes the top place found, or does nothing
+						if (places?.[0] && searchFor === 'find') send({ action: 'address', address: places[0].address });
 					}}
 				>
 					<label>
@@ -219,9 +219,6 @@
 						<input bind:value={typing} oninput={() => search(typing ?? '')} type="search" placeholder="Store name or address" autocomplete="off" maxlength="200" required disabled={busy} />
 					</label>
 					{#if searchFor === 'find'}{@render suggestions((address) => send({ action: 'address', address }))}{/if}
-					<div class="actions">
-						<button class="pill-button small" disabled={busy}>{busy ? 'Finding it…' : 'Use what I typed'}</button>
-					</div>
 				</form>
 			{/if}
 

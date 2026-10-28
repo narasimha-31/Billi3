@@ -5,7 +5,7 @@ import { deleteAccount } from './delete-account.server';
 import { sampleBranches, sampleHome, sampleReceipts } from './routes/demo/sample-receipts';
 
 // guest sessions one network can start a day; a judging room shares one address, so not too few
-export const GUEST_STARTS_PER_NETWORK = 10;
+export const GUEST_STARTS_PER_NETWORK = 20;
 
 // the address is kept only as a salted hash, so the table can't be read back into addresses
 async function networkOf(ip: string) {

@@ -8,7 +8,7 @@ const UUID = /^[0-9a-f-]{36}$/;
 const SHOWN = 6;
 const PLACES = 8;
 
-// Other branches of one of the shopper's stores near their ZIP, from OpenStreetMap, for "Which one?".
+// Other branches of one of the shopper's stores near their ZIP, from OpenStreetMap or else the web, for "Which one?".
 // With ?q, whatever places match what the shopper typed, for picking the store from a list: a typed
 // address gets addresses like it, a name gets shops by that name, then any place by it, then the web.
 export const GET: RequestHandler = async ({ params, locals, url }) => {
@@ -29,6 +29,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 		const places = onMap.length ? onMap : await storeOnWeb(typed, map.you, user.id);
 		return json({ places: places.slice(0, PLACES), fromWeb: !onMap.length && places.length > 0 });
 	}
-	const found = await branchesOf(store.data.name, map.you);
-	return json({ branches: found.filter((b) => b.address).slice(0, SHOWN) });
+	const found = (await branchesOf(store.data.name, map.you)).filter((b) => b.address);
+	if (found.length) return json({ branches: found.slice(0, SHOWN) });
+	// a small shop missing from OpenStreetMap: its branches near the ZIP from the web, so none need typing
+	const web = (await searchClosed(user.id)) ? [] : await storeOnWeb(store.data.name, map.you, user.id);
+	return json({ branches: web.slice(0, SHOWN), fromWeb: web.length > 0 });
 };

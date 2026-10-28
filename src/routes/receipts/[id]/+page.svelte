@@ -59,7 +59,6 @@
 		}
 	};
 
-	let typedForm = $state<HTMLFormElement>();
 	let pickedForm = $state<HTMLFormElement>();
 	let pickedPlace = $state<{ lat: number; lng: number; address: string } | null>(null);
 	let suggestTimer: ReturnType<typeof setTimeout> | undefined;
@@ -152,9 +151,15 @@
 									<button class="option"><span>{branchLabel(data.branch)}</span><span class="note">Yes, this one</span></button>
 								</form>
 							{/if}
-							<!-- Enter with nothing picked looks up the address as typed -->
-							<form class="typed" method="POST" action="?/branch" use:enhance={branchPicked} bind:this={typedForm}>
-								<input name="typed" type="search" bind:value={typedText} oninput={suggest} placeholder="Search a street or store near you" autocomplete="off" maxlength="200" aria-label="Search a street or store" />
+							<!-- nothing typed is ever saved as it is: Enter takes the top place in the list, or does nothing -->
+							<form
+								class="typed"
+								onsubmit={(e) => {
+									e.preventDefault();
+									if (spots[0]) pick(spots[0]);
+								}}
+							>
+								<input type="search" bind:value={typedText} oninput={suggest} placeholder="Search a street or store near you" autocomplete="off" maxlength="200" aria-label="Search a street or store" />
 							</form>
 							<form method="POST" action="?/branch" use:enhance={branchPicked} bind:this={pickedForm} hidden>
 								<input type="hidden" name="lat" value={pickedPlace?.lat} />
@@ -173,7 +178,7 @@
 								{#if finding}
 									<li class="none">Looking near your ZIP…</li>
 								{:else if !spots.length}
-									<li class="none">{typedText.trim() ? 'Nothing near you matches yet. Keep typing the street, or press Enter.' : 'No branches found near your ZIP. Search the street above.'}</li>
+									<li class="none">{typedText.trim() ? 'Nothing near you matches yet. Keep typing the store or street.' : 'No branches found near your ZIP. Search the street above.'}</li>
 								{/if}
 							</ul>
 							{#if form?.branchProblem}<p class="branch-problem" role="alert">{form.branchProblem}</p>{/if}
