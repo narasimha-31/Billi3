@@ -73,13 +73,14 @@
 	let steps: HTMLElement;
 	let plane: HTMLElement;
 	let wash: HTMLElement;
-	let gapLine: SVGPathElement;
+	let gapLayer: SVGSVGElement;
 	let stage: HTMLElement;
 	let pins: HTMLElement[] = $state([]);
 	let gapTag = $state<HTMLElement>();
 	let chart = $state<HTMLElement>();
 	let flip = $state<HTMLElement>();
 	let flipped = $state(false);
+	let grown = $state(false);
 	const gapAt = { x: (low.x + high.x) / 2 + 150, y: (low.y + high.y) / 2 };
 	const gapBend = { x: (low.x + high.x) / 2 + 260, y: (low.y + high.y) / 2 };
 	const gapBox = (() => {
@@ -164,10 +165,12 @@
 			const gapSeen = part(0.55) * (1 - part(1.5 - leave));
 			const creepSeen = part(1.55) * (1 - part(2.45 - leave));
 			const turned = part(2.5);
-			gapLine.style.strokeDashoffset = `${1 - part(0.55)}`;
-			gapLine.style.opacity = `${gapSeen}`;
-			gapTag?.style.setProperty('--seen', `${gapSeen}`);
-			chart?.style.setProperty('--creep', `${creepSeen}`);
+			// Only opacity and transform of whole layers change while scrolling, which the graphics chip
+			// does on its own. Anything redrawn per frame flickered on phones that couldn't keep up.
+			gapLayer.style.opacity = `${gapSeen}`;
+			if (gapTag) gapTag.style.opacity = `${gapSeen}`;
+			if (chart) chart.style.opacity = `${creepSeen}`;
+			if (grown !== creepSeen > 0.5) grown = creepSeen > 0.5;
 
 			// What stands on the map is drawn flat on top: each spot goes through the same camera as the
 			// map, then the perspective, so the words stay sharp and every browser shows the same thing.
@@ -184,8 +187,8 @@
 				el.style.transform = `translate3d(${ax + across * near}px, ${ay + down * ct * near}px, 0) scale(${near * size * (phone ? 0.82 : 1)})`;
 			};
 			stores.forEach((s, i) => place(pins[i], s.x, s.y));
-			place(gapTag, gapAt.x, gapAt.y);
-			place(chart, chartAt.x, chartAt.y);
+			place(gapTag, gapAt.x, gapAt.y, 0.8 + gapSeen * 0.2);
+			place(chart, chartAt.x, chartAt.y, 0.92 + creepSeen * 0.08);
 			// the recall turns the Walmart tag over like a card
 			if (flip) {
 				flip.style.scale = `${Math.max(0.02, Math.abs(Math.cos(Math.PI * turned)))} 1`;
@@ -243,8 +246,8 @@
 				{/each}
 			</svg>
 			<!-- its own small layer, so drawing the line never repaints the whole town -->
-			<svg class="gap" viewBox="{gapBox.x} {gapBox.y} {gapBox.w} {gapBox.h}" style:left="{gapBox.x}px" style:top="{gapBox.y}px" width={gapBox.w} height={gapBox.h}>
-				<path class="gap-line" bind:this={gapLine} pathLength="1" d="M{low.x} {low.y} Q {gapBend.x} {gapBend.y} {high.x} {high.y}" />
+			<svg class="gap" style:opacity="0" bind:this={gapLayer} viewBox="{gapBox.x} {gapBox.y} {gapBox.w} {gapBox.h}" style:left="{gapBox.x}px" style:top="{gapBox.y}px" width={gapBox.w} height={gapBox.h}>
+				<path class="gap-line" d="M{low.x} {low.y} Q {gapBend.x} {gapBend.y} {high.x} {high.y}" />
 			</svg>
 		</div>
 
@@ -268,9 +271,9 @@
 					</div>
 				</div>
 			{/each}
-			<div class="spot-at" bind:this={gapTag}><div class="gap-tag">{money(gap)} more</div></div>
-			<div class="spot-at" bind:this={chart}>
-				<div class="chart">
+			<div class="spot-at" style:opacity="0" bind:this={gapTag}><div class="gap-tag">{money(gap)} more</div></div>
+			<div class="spot-at" style:opacity="0" bind:this={chart}>
+				<div class="chart" class:grown>
 					<p class="chart-head">Ground beef, per pound <strong>{money(beef[0])} → {money(beef.at(-1)!)}</strong></p>
 					<div class="bars">
 						{#each beef as cents, i (i)}
@@ -292,7 +295,7 @@
 				{#if signInFailed}<p class="failed" role="alert">Sign-in didn’t go through. Try again.</p>{/if}
 				<div class="actions">
 					<GoogleButton />
-					<a class="quiet" href="/demo">Try the demo</a>
+					<a class="quiet" href="/demo">Try it live, no sign-in</a>
 				</div>
 			</div>
 		</div>
@@ -421,9 +424,6 @@
 		stroke: var(--color-up);
 		stroke-width: 9;
 		stroke-linecap: round;
-		stroke-dasharray: 1;
-		stroke-dashoffset: 1;
-		opacity: 0;
 	}
 
 	/* what stands on the map lives on a flat layer above it, placed by the camera each frame */
@@ -563,8 +563,6 @@
 		font-weight: 700;
 		color: #fff;
 		box-shadow: 0 10px 24px -8px rgb(180 35 24 / 0.5);
-		opacity: var(--seen, 0);
-		scale: calc(0.8 + var(--seen, 0) * 0.2);
 	}
 
 	.chart {
@@ -576,8 +574,7 @@
 		background: #fff;
 		padding: 0.75rem 0.85rem 0.85rem;
 		box-shadow: 0 14px 30px -10px rgb(0 0 0 / 0.25);
-		opacity: var(--creep, 0);
-		translate: -50% calc((1 - var(--creep, 0)) * 20px);
+		translate: -50% 0;
 	}
 
 	.chart-head {
@@ -615,7 +612,12 @@
 		border-radius: 3px 3px 1px 1px;
 		background: color-mix(in srgb, var(--color-up) calc(35% + var(--h) * 65%), #e5e5ea);
 		transform-origin: bottom;
-		scale: 1 clamp(0, calc(var(--creep, 0) * 14 - var(--i)), 1);
+		scale: 1 0;
+		transition: scale 450ms cubic-bezier(0.2, 0, 0, 1) calc(var(--i) * 45ms);
+	}
+
+	.grown .bars span {
+		scale: 1 1;
 	}
 
 	/* the words scroll over the town, one screen per scene */
@@ -794,7 +796,8 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.pin,
-		.ready .pin {
+		.ready .pin,
+		.bars span {
 			transition: none;
 		}
 
