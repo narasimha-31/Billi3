@@ -61,7 +61,7 @@ Judges and visitors can open a guest session from the landing page. It starts wi
 
 ![A receipt read line by line](screenshots/receipt-read.jpg)
 
-## How we use NVIDIA Nemotron
+## How Billie uses NVIDIA Nemotron
 
 Every model call goes through Nebius Token Factory at runtime.
 
@@ -72,11 +72,11 @@ Every model call goes through Nebius Token Factory at runtime.
 | Kimi K2.7 | Main receipt reader (why below). |
 | Qwen3 Embedding 8B and Qwen 3.8 | Group the same product across stores, and judge close calls. |
 
-In our call log, Nemotron 3 Super named items 99 times with 98 good answers and a median of 1.5 seconds. Nemotron 3.5 Super VL read 47 receipts with 46 good answers and a median of 1.9 seconds.
+In the app's call log, Nemotron 3 Super named items 99 times with 98 good answers and a median of 1.5 seconds. Nemotron 3.5 Super VL read 47 receipts with 46 good answers and a median of 1.9 seconds.
 
 ### Why Kimi K2.7 reads the receipts
 
-We picked the reader with a bake-off, not by name. We first tried 27 models from the Token Factory catalog on real receipts, then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
+I picked the reader with a bake-off, not by name. I first tried 27 models from the Token Factory catalog on real receipts, then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
 
 | Model | Printed lines found | Made-up lines | Median time |
 | --- | --- | --- | --- |
@@ -87,19 +87,19 @@ We picked the reader with a bake-off, not by name. We first tried 27 models from
 
 A missed or made-up line means a wrong price, so the most accurate reader won. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
-We did the same for grouping products. On 83 product pairs checked by hand, Qwen 3.8 never merged two different products in three runs. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
+I did the same for grouping products. On 83 product pairs checked by hand, Qwen 3.8 never merged two different products in three runs. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
 
-## Where Token Factory sped us up
+## Where Token Factory sped me up
 
-- **One API for every model.** Trying a new model is a one-line change, so we compared 27 vision models and 24 judge models with the same code, on the same real receipts.
-- **Real costs per call.** Every call is logged with its tokens and price. Building and testing the whole app, bake-offs included, has cost $2.47 of Token Factory credit so far, by our call log.
+- **One API for every model.** Trying a new model is a one-line change, so I compared 27 vision models and 24 judge models with the same code, on the same real receipts.
+- **Real costs per call.** Every call is logged with its tokens and price. Building and testing the whole app, bake-offs included, has cost $2.67 of Token Factory credit across 960 calls, by the app's call log.
 - **Falling back is easy.** When the main reader times out, the backup is the same API with another model name, so a slow model never leaves a receipt unread.
 
-We used Token Factory only. The app is hosted on Vercel and Supabase free tiers, so Nebius AI Cloud was not needed.
+I used Token Factory only. The app is hosted on Vercel and Supabase free tiers, so Nebius AI Cloud was not needed.
 
-## How we use Tavily
+## How Billie uses Tavily
 
-- Once a day, a search of the past week on fda.gov finds new food recalls. They are matched to each shopper's receipts on our own server, so nothing about anyone is sent out.
+- Once a day, a search of the past week on fda.gov finds new food recalls. They are matched to each shopper's receipts on Billie's own server, so nothing about anyone is sent out.
 - Once a day, a search on trusted nutrition sites (Harvard, the American Heart Association, NIH and others) finds healthy foods to suggest.
 - When a small shop is missing from OpenStreetMap, its address is looked up on the web, so the shopper can pick it instead of typing it.
 
@@ -128,9 +128,9 @@ The one that fails: on a made-up multi-buy receipt, Kimi K2.7 misread a line. Th
 
 ### What breaks, and what Billie does about it
 
-| What we saw | What Billie does |
+| What I saw | What Billie does |
 | --- | --- |
-| The main reader is slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at our old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
+| The main reader is slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at the old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
 | A line is misread. | The lines are added up and checked against the printed subtotal and total. A receipt that doesn't add up is marked for the shopper to check. |
 | Text on a receipt tries to give the model orders. | Answers must match a strict schema, and attack lines are left out or flagged, never named as products. |
 | A photo is blurry, handwritten, not a receipt, or the same one twice. | A blurry photo is flagged on the phone before it is sent, with a choice to retake it. The rest are refused, and a refused photo doesn't count toward the day's receipts. |
