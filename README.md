@@ -4,7 +4,9 @@
 
 Open source under the MIT License. Free to use, change and share.
 
-Built for the Nebius x NVIDIA Global AI Hackathon, October 2026, in the Best Apps and Agents track.
+> [!NOTE]
+> **Nebius x NVIDIA Global AI Hackathon, October 2026**
+> Track: **Best Apps and Agents**. NVIDIA Nemotron models, called at runtime through Nebius Token Factory.
 
 Billie reads your grocery receipts and remembers every price you paid, store by store. It shows where the same item costs less, when a price goes up, and when food you bought is recalled.
 
