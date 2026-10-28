@@ -8,7 +8,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon, October 2026, in the Best App
 
 Billie reads your grocery receipts and remembers every price you paid, store by store. It shows where the same item costs less, when a price goes up, and when food you bought is recalled.
 
-**Try it live, no sign-in:** [billi3.vercel.app/demo](https://billi3.vercel.app/demo)
+**Live app:** [billi3.vercel.app](https://billi3.vercel.app). Scroll the page for the story, then press Try it live to use the app without signing in.
 
 ![Billie on a laptop](screenshots/landing.jpg)
 
