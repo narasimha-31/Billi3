@@ -69,3 +69,26 @@ export function addressesIn(text: string): string[] {
 	}
 	return [...seen.values()];
 }
+
+type PhotonFeature = { geometry?: { coordinates?: unknown[] }; properties?: Record<string, unknown> };
+const NEAR_MILES = 40;
+
+// Photon's answer as places to pick: US only, a street address each, within a drive of the ZIP, nearest
+// first. A street found without the house typed keeps the typed number, the way map apps fill it in.
+export function photonPlaces(answer: unknown, centre: { lat: number; lng: number }, typed = '') {
+	const typedNumber = typed.trim().match(/^\d+[a-z]?\b/i)?.[0] ?? null;
+	const features = ((answer as { features?: PhotonFeature[] })?.features ?? []).flatMap((f) => {
+		const p = f.properties ?? {};
+		const [lng, lat] = (f.geometry?.coordinates ?? []) as number[];
+		const text = (key: string) => (typeof p[key] === 'string' ? (p[key] as string) : null);
+		const isStreet = text('type') === 'street';
+		const road = isStreet ? text('name') : text('street');
+		if (text('countrycode') !== 'US' || !Number.isFinite(lat) || !Number.isFinite(lng) || !road) return [];
+		const street = [isStreet ? typedNumber : text('housenumber'), road].filter(Boolean).join(' ');
+		const address = [street, text('city') ?? text('county'), [text('state'), text('postcode')].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+		const named = !isStreet && text('name') && text('name') !== street ? text('name') : null;
+		return [{ name: named, address, lat, lng, miles: milesBetween(centre, { lat, lng }) }];
+	});
+	const unique = [...new Map(features.map((f) => [f.address, f])).values()];
+	return unique.filter((f) => f.miles <= NEAR_MILES).sort((a, b) => a.miles - b.miles);
+}

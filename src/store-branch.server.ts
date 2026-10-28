@@ -1,5 +1,5 @@
 import { milesBetween, type Point } from './distance';
-import { matchingBranches, shopsFrom, type Branch } from './store-branch';
+import { matchingBranches, photonPlaces, shopsFrom, type Branch } from './store-branch';
 
 // OpenStreetMap's Nominatim search: free, no key, at most one request a second. It is sent the chain
 // name and a box around the ZIP's centre, never the ZIP or anything about the shopper.
@@ -58,7 +58,7 @@ export async function branchesOf(storeName: string, centre: Point): Promise<Bran
 export async function searchPlaces(query: string, centre: Point) {
 	return (await shopsNear(query, centre))
 		.filter((shop) => shop.address)
-		.map((shop) => ({ name: shop.name ?? shop.brand, address: shop.address!, miles: milesBetween(centre, shop) }))
+		.map((shop) => ({ name: shop.name ?? shop.brand, address: shop.address!, lat: shop.lat, lng: shop.lng, miles: milesBetween(centre, shop) }))
 		.sort((a, b) => a.miles - b.miles);
 }
 
@@ -70,4 +70,21 @@ export async function branchesNear(storeNames: string[], centre: Point) {
 		found.set(name, (await branchesOf(name, centre))[0] ?? null);
 	}
 	return found;
+}
+
+// Photon, OpenStreetMap's search made for typing: free, no key, suggestions as each word is typed.
+// It gets what was typed and the ZIP's centre rounded to about a kilometre, so the nearest come first.
+const PHOTON = 'https://photon.komoot.io/api/';
+
+export async function addressesLike(typed: string, centre: Point) {
+	const url = new URL(PHOTON);
+	for (const [key, value] of Object.entries({ q: typed, lat: centre.lat.toFixed(2), lon: centre.lng.toFixed(2), limit: '10', lang: 'en' })) url.searchParams.set(key, value);
+	try {
+		const response = await fetch(url, { headers: { 'user-agent': 'Billie/1.0 (+https://billi3.vercel.app)' }, signal: AbortSignal.timeout(4000) });
+		if (!response.ok) throw new Error(`photon returned ${response.status}`);
+		return photonPlaces(await response.json(), centre, typed);
+	} catch (error) {
+		console.warn('address search failed:', error instanceof Error ? error.message : error);
+		return [];
+	}
 }
