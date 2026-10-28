@@ -16,7 +16,9 @@ Billie reads your grocery receipts and remembers every price you paid, store by 
 
 ## The problem
 
-Grocery prices change all the time, and not the same way at every store. The same item can cost more at one store than at another a mile away, and a price that creeps up a few cents at a time is easy to miss. The proof is on the receipt, but receipts end up in a bag or the trash, and almost nobody types them into a spreadsheet.
+Groceries in the US cost 28% more than they did five years ago. The government's price index for food at home rose from 251.4 in September 2020 to 321.8 in September 2026, and it is still climbing, up 1.8% in the last year ([BLS](https://data.bls.gov/timeseries/CUUR0000SAF11)).
+
+That is the national average. A shopper's own prices change all the time, and not the same way at every store. The same item can cost more at one store than at another a mile away, and a price that creeps up a few cents at a time is easy to miss. The proof is on the receipt, but receipts end up in a bag or the trash, and almost nobody types them into a spreadsheet.
 
 Food recalls have the same gap. The FDA posts them, but a shopper has to find the notice and remember what they bought weeks ago.
 
