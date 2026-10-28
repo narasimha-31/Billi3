@@ -14,6 +14,14 @@ Billie reads your grocery receipts and remembers every price you paid, store by 
 
 ![Billie on a laptop](screenshots/landing.jpg)
 
+## The problem
+
+Grocery prices change all the time, and not the same way at every store. The same item can cost more at one store than at another a mile away, and a price that creeps up a few cents at a time is easy to miss. The proof is on the receipt, but receipts end up in a bag or the trash, and almost nobody types them into a spreadsheet.
+
+Food recalls have the same gap. The FDA posts them, but a shopper has to find the notice and remember what they bought weeks ago.
+
+Billie turns the receipts people already get into their own price history, so they see all of this without typing anything.
+
 ## What it does
 
 - **Reads any receipt.** Snap a photo or upload a PDF. Every line is read, named in plain words and checked against the printed total. The photo is deleted once it is read, unless you choose to keep it.
