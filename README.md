@@ -12,6 +12,8 @@ Billie reads your grocery receipts and remembers every price you paid, store by 
 
 **Live app:** [billi3.vercel.app](https://billi3.vercel.app). Scroll the page for the story, then press Try it live to use the app without signing in.
 
+**Demo video:** [watch it on YouTube](https://youtu.be/SqtsksczA_o) (2 minutes).
+
 ![Billie on a laptop](screenshots/landing.jpg)
 
 ## The problem
