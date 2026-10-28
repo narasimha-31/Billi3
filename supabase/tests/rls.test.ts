@@ -9,9 +9,11 @@ const noSession = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(url, process.env.SUPABASE_SECRET_KEY!, noSession);
 const userIds: string[] = [];
 
-async function signedInUser(label: string): Promise<SupabaseClient> {
+// A brand-new account may add only 3 receipts on its first day. Most tests need more, so their
+// accounts are made as guests, which the database gives the full 10; row security is the same for both.
+async function signedInUser(label: string, firstDay = false): Promise<SupabaseClient> {
 	const email = `rls-${label}-${crypto.randomUUID()}@billi.test`;
-	const created = await admin.auth.admin.createUser({ email, email_confirm: true });
+	const created = await admin.auth.admin.createUser({ email, email_confirm: true, ...(!firstDay && { app_metadata: { guest: true } }) });
 	if (created.error) throw created.error;
 	userIds.push(created.data.user.id);
 
@@ -321,6 +323,13 @@ describe('receipt and upload limits, enforced by the database', () => {
 		return client;
 	}
 
+	it('gives a brand-new account 3 receipts on its first day', async () => {
+		const fresh = await signedInUser('fresh', true);
+		for (let i = 0; i < 3; i++) expect((await fresh.from('receipts').insert({})).error).toBeNull();
+		expect((await fresh.from('receipts').insert({})).error?.message).toContain('receipt limit: daily');
+		expect((await fresh.rpc('my_upload_window')).data[0].daily_limit).toBe(3);
+	});
+
 	it('refuses a burst of more than 5 receipts in a minute', async () => {
 		const carol = await userWithHistory('carol', 0, 0);
 		for (let i = 0; i < 5; i++) {
@@ -377,7 +386,7 @@ describe('receipt and upload limits, enforced by the database', () => {
 		expect(frees).toBeGreaterThan(Date.now() + 23 * 3600_000);
 		expect(frees).toBeLessThanOrEqual(Date.now() + 24 * 3600_000);
 		const empty = await userWithHistory('kit', 0, 0);
-		expect((await empty.rpc('my_upload_window')).data).toEqual([{ used: 0, frees_at: null }]);
+		expect((await empty.rpc('my_upload_window')).data).toEqual([{ used: 0, frees_at: null, daily_limit: 10 }]);
 		const anon = createClient(url, publishable, noSession);
 		expect((await anon.rpc('my_upload_window')).error).not.toBeNull();
 	});
@@ -584,7 +593,7 @@ describe('price changes', () => {
 describe('shared products', () => {
 	const vector = (hot: number) => `[${Array.from({ length: 1024 }, (_, i) => (i === hot ? 1 : 0)).join(',')}]`;
 
-	it('can be read by signed-in people but only added by the server, and finds the nearest by meaning', async () => {
+	it('are read only through your own receipt lines, added only by the server, and found by meaning', async () => {
 		const tag = crypto.randomUUID().slice(0, 8);
 		const made = await admin.from('products').insert([
 			{ name: `Test bananas ${tag}`, match_key: `banana test ${tag}`, embedding: vector(3) },
@@ -595,8 +604,13 @@ describe('shared products', () => {
 			const twin = await admin.from('products').insert({ name: `Test banana ${tag}`, match_key: `banana test ${tag}`, embedding: vector(3) });
 			expect(twin.error?.code).toBe('23505');
 
-			const read = await alice.from('products').select('name').like('name', `%${tag}`);
-			expect(read.data).toHaveLength(2);
+			// nobody can list what other people bought; a product shows once your own line points to it
+			expect((await alice.from('products').select('name').like('name', `%${tag}`)).data).toEqual([]);
+			const line = await admin.from('receipt_items').insert({ user_id: aliceId, receipt_id: aliceReceiptId, position: 900, kind: 'item', raw_text: 'BANANAS', total_cents: 50, product_id: made.data![0].id }).select('id').single();
+			expect(line.error).toBeNull();
+			expect((await alice.from('products').select('name').like('name', `%${tag}`)).data).toEqual([{ name: `Test bananas ${tag}` }]);
+			expect((await bob.from('products').select('name').like('name', `%${tag}`)).data).toEqual([]);
+			await admin.from('receipt_items').delete().eq('id', line.data!.id);
 			expect((await alice.from('products').insert({ name: `Sneaky ${tag}`, match_key: `sneaky ${tag}`, embedding: vector(1) })).error).not.toBeNull();
 			expect((await createClient(url, publishable, noSession).from('products').select('name').like('name', `%${tag}`)).data ?? []).toEqual([]);
 

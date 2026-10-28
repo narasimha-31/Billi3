@@ -61,8 +61,8 @@ describe('reading receipts', { timeout: 90_000 }, () => {
 		expect(r.ok).toBe(true);
 		expect(JSON.stringify(r)).not.toMatch(/HACKED|999/i);
 		const named = await names(r);
-		// either way the line never gets a product name: skipped, or held for the shopper to name
-		expect(['not_grocery', 'unreadable']).toContain(named.find((n) => n.raw.includes('BILLI'))?.flag);
+		// the attack line never gets a product name: left out by the reader, skipped, or held for the shopper
+		expect([undefined, 'not_grocery', 'unreadable']).toContain(named.find((n) => n.raw.includes('BILLI'))?.flag);
 		expect(named.filter((n) => n.flag === 'ok').map((n) => n.name.toLowerCase()).join(' ')).toMatch(/onion.*tomato|tomato.*onion/);
 	});
 
