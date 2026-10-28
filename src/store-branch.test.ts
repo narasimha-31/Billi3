@@ -67,6 +67,16 @@ describe('addressesIn', () => {
 		expect(addressesIn(text)).toEqual(['11920 Bissonnet St, Houston, TX 77099', '2010 S. Mason Rd Suite 100, Katy, TX 77450']);
 	});
 
+	it('reads the ways real listings wrote one shop: glued to a label, suite after a comma, state spelled out', () => {
+		const pages = [
+			'Houston 📍 Address6655 Harwin Drive, Suite 103-A, Houston, TX 77036, Houston, TX 📞 Phone(713) 266-7771',
+			"text that says 'Parivar Grocers 6655 Harwin Dr, Ste 103-A, Houston, Texas, 77036 713-266-7771 Mon-Sun",
+			'#### Parivar Grocers 6655 Harwin Drive, Suite 103-A Houston, Texas 77036, United States [...] P: (713) 266-7771',
+			'### Address 6655 Harwin Dr Unit 103 -A Houston, TX 77036 United States More on Yelp'
+		];
+		for (const page of pages) expect(addressesIn(page), page).toEqual([expect.stringMatching(/^6655 Harwin (Dr|Drive)\b.*Houston,? (TX|Texas),? 77036$/)]);
+	});
+
 	it('skips numbers that are not addresses', () => {
 		expect(addressesIn('Open 9 to 9. Call 713 555 0101. Rated 4.5 by 120 people.')).toEqual([]);
 	});

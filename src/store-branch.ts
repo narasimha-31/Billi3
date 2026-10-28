@@ -57,8 +57,9 @@ export function shopsFrom(answer: unknown): Shop[] {
 }
 
 // US street addresses written out in web text: "8130 Kirby Dr, Houston, TX 77054". Store pages and
-// listings spell streets every which way, so the street type is the anchor and the ZIP the end.
-const STREET = /\b\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Za-z0-9.' -]{2,40}?\s(?:St|Street|Rd|Road|Dr|Drive|Ave|Avenue|Blvd|Boulevard|Hwy|Highway|Pkwy|Parkway|Ln|Lane|Way|Fwy|Freeway|Ct|Court|Pl|Place|Trl|Trail|Cir|Circle|Expy|Expressway|Loop|Plaza|Sq|Square)\.?(?:\s+(?:#|Ste\.?|Suite|Unit)\s*[A-Za-z0-9-]+)?,?\s+[A-Za-z .'-]{2,30},?\s+[A-Z]{2},?\s+\d{5}\b/g;
+// listings spell streets every which way (glued to a label, suite after a comma, the state in full), so
+// the street type is the anchor and the ZIP the end.
+const STREET = /(?<![\d.])\d{1,6}\s+(?:[NSEW]\.?\s+)?[A-Za-z0-9.' -]{2,40}?\s(?:St|Street|Rd|Road|Dr|Drive|Ave|Avenue|Blvd|Boulevard|Hwy|Highway|Pkwy|Parkway|Ln|Lane|Way|Fwy|Freeway|Ct|Court|Pl|Place|Trl|Trail|Cir|Circle|Expy|Expressway|Loop|Plaza|Sq|Square)\.?(?:,?\s+(?:#|Ste\.?|Suite|Unit)\s*[A-Za-z0-9]+(?:\s?-\s?[A-Za-z0-9]+)?)?,?\s+[A-Za-z .'-]{2,30}?,?\s+(?:[A-Z]{2}|[A-Z][a-z]+(?: [A-Z][a-z]+)?),?\s+\d{5}\b/g;
 
 export function addressesIn(text: string): string[] {
 	const seen = new Map<string, string>();
