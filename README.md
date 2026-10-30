@@ -78,9 +78,9 @@ Before the change, in the app's call log, Nemotron 3 Super named items 99 times 
 
 ### How I picked each model
 
-Every model was tested on my own real receipts, through the app's own prompt and checks, and scored against answers I checked by hand. Each job got its own test.
+Every model was tested on my own real receipts, through the app's own prompt and checks, and scored against answers I checked by hand. I tested in the order a receipt flows through the app: reading, then naming, then grouping.
 
-**Reading the receipt.** Three real, crumpled receipts (Fiesta, Parivar and H-E-B, 43 printed lines) plus a meme and a handwritten bill that should be refused. The test script sends them to every model in the Token Factory catalog, 27 at the time. 16 of them only take text and are turned away before any cost, so 11 really competed. Kimi K2.6 answered with broken JSON every time, and MiniCPM V 4.5 and Muse Spark refused the request settings. The other 8 read the receipts:
+**Step 1: Reading, first round.** Three real, crumpled receipts (Fiesta, Parivar and H-E-B, 43 printed lines) plus a meme and a handwritten bill that should be refused. The test script sends them to every model in the Token Factory catalog, 27 at the time. 16 of them only take text and are turned away before any cost, so 11 really competed. Kimi K2.6 answered with broken JSON every time, and MiniCPM V 4.5 and Muse Spark refused the request settings. The other 8 read the receipts. Ranked by lines found, then fewest made-up lines, then speed:
 
 | Model | Printed lines found (of 43) | Made-up lines | Median time |
 | --- | --- | --- | --- |
@@ -93,7 +93,7 @@ Every model was tested on my own real receipts, through the app's own prompt and
 | DeepSeek V4.1 Flash | 10 | 32 | 7.4 s |
 | Gemma 3 27B | 3 | 32 | 15.9 s |
 
-The best four then read the same three receipts three more times each, 129 printed lines in total:
+**Step 2: Reading, final round.** The top four read the same three receipts three times each, 129 printed lines in total, ranked the same way:
 
 | Model | Printed lines found | Made-up lines | Median time |
 | --- | --- | --- | --- |
@@ -104,7 +104,7 @@ The best four then read the same three receipts three more times each, 129 print
 
 A missed or made-up line means a wrong price, so the most accurate reader won. Kimi K2.7 read receipts until October 30. Now that it is retiring, Kimi K3 takes over as the next best. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
-**Naming items and picking aisles.** The 42 item lines from the same three receipts, each labelled by hand with the aisle it belongs in. The test sends the lines exactly as the app does and scores every aisle against the labels.
+**Step 3: Naming items and picking aisles.** The 42 item lines from the same three receipts, each labelled by hand with the aisle it belongs in. The test sends the lines exactly as the app does and scores every aisle against the labels. Ranked by aisles right, and any model that merged two different products into one name was out.
 
 | Model | Aisles right | Median time |
 | --- | --- | --- |
@@ -113,7 +113,7 @@ A missed or made-up line means a wrong price, so the most accurate reader won. K
 
 In a side-by-side on the same kind of lines, Nemotron 3.5 Lightning named shampoo and chicken thighs both "Chicken breast", so it was out. Nemotron 3 Super named items until October 30, and Nemotron 3.5 Super VL does now.
 
-**Grouping the same product across stores.** 83 pairs of product names, each marked by hand as the same product or not, run three times. Qwen 3.8 never merged two different products. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
+**Step 4: Grouping the same product across stores.** 83 pairs of product names, each marked by hand as the same product or not, run three times. Ranked by wrong merges first, since one wrong merge spoils every comparison after it. Qwen 3.8 never merged two different products. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. So Qwen judges and Nemotron names.
 
 ## The model change on October 30
 
