@@ -9,7 +9,7 @@ Open source under the MIT License. Free to use, change and share.
 > Track: **Best Apps and Agents**. NVIDIA Nemotron models, called at runtime through Nebius Token Factory.
 
 > [!IMPORTANT]
-> **Model change on October 30, 2026.** Nebius announced that Kimi K2.7 Code and Nemotron 3 Super retire on November 9, 2026, which falls during judging. So the app now reads receipts with Kimi K3 and names items with Nemotron 3.5 Super VL, which also stays the backup reader. The demo video was recorded before the change and shows the old models. Details in [the model change](#the-model-change-on-october-30).
+> **Model change on October 30, 2026.** On deadline day, Nebius announced that Kimi K2.7 Code and Nemotron 3 Super retire on November 9, 2026. So the app now reads receipts with Kimi K3 and names items with Nemotron 3.5 Super VL, which also stays the backup reader. The demo video was recorded before the change and shows the old models. Details in [the model change](#the-model-change-on-october-30).
 
 Billie reads your grocery receipts and remembers every price you paid, store by store. It shows where the same item costs less, when a price goes up, and when food you bought is recalled.
 
@@ -95,7 +95,7 @@ I did the same for grouping products. On 83 product pairs checked by hand, Qwen 
 
 On October 30, I got an email from Nebius: 11 serverless models, including GLM-5.1, DeepSeek V4, Kimi K2.6 and K2.7 Code, Nemotron 3 Nano and Nemotron 3 Super, leave the Playground and API on November 9, 2026. It listed every model, linked a full notice with suggested replacements, and said dedicated endpoints are not affected. Retiring older models as newer ones arrive is normal for any model provider, and the notice gave me time to move.
 
-Two of those models ran Billie: Kimi K2.7 Code read the receipts, and Nemotron 3 Super named the items. Judging runs past November 9, so I moved off both the same day, before the deadline. Because Token Factory serves every model through one API, the move was a change of model names plus a rerun of my evals, not a rewrite.
+Two of those models ran Billie: Kimi K2.7 Code read the receipts, and Nemotron 3 Super named the items. The app has to keep working after November 9, so I moved off both the same day, before the deadline. Because Token Factory serves every model through one API, the move was a change of model names plus a rerun of my evals, not a rewrite.
 
 - **Reading:** Kimi K3, second best in my bake-off. In a run through the app's own code on October 30, 8 of its 10 reads came back with a median of 3.1 seconds. The other 2 hit the 20 second limit, and Nemotron 3.5 Super VL took over and read them.
 - **Naming:** Nemotron 3.5 Super VL. On 42 hand-checked lines from three real receipts, it picked the right aisle for 40 (95%), with a median of 2.5 seconds. Nemotron 3 Super got 98% on the same lines.
