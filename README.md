@@ -155,7 +155,7 @@ The one that failed: on a made-up multi-buy receipt, Kimi K2.7 misread a line. T
 
 - **50 database security tests.** Each shopper's receipts, items, stores, photos, settings and upload counts are locked to their account in the database itself. Products are readable only through your own receipt lines. Limits live in the database too: 5 receipts a minute, 10 a day (3 on an account's first day), 100 in 30 days, JPEG photos up to 5 MB.
 - **An attack pass on the live app** with throwaway accounts. A second account could not read, change or delete another person's data through the pages, the forms or the database API. Forms posted from other sites are refused, no other site can frame the app, and signed-out visitors get nothing.
-- **296 automated tests** for the money math, receipt checks, budgets, limits and parsing, and Playwright scripts that click through the app at phone and laptop sizes.
+- **297 automated tests** for the money math, receipt checks, budgets, limits and parsing, and Playwright scripts that click through the app at phone and laptop sizes.
 
 ## Run it yourself
 
