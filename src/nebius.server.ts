@@ -41,10 +41,10 @@ async function spentToday(userId: string | null) {
 	};
 }
 
-// Whether this model's last call in the past three minutes failed. A model that is down then
-// gets skipped instead of making every person wait for its limit, and after three quiet
-// minutes one read tries it again, so we switch back on our own once it recovers.
-const COOL_DOWN_MS = 3 * 60_000;
+// Whether this model's last call in the past minute failed. A model that is down then
+// gets skipped instead of making every person wait for its limit, and after a quiet
+// minute one read tries it again, so we switch back on our own once it recovers.
+const COOL_DOWN_MS = 60_000;
 
 export async function recentlyFailed(role: ModelRole) {
 	const { data, error } = await admin
