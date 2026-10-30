@@ -104,7 +104,14 @@ The best four then read the same three receipts three more times each, 129 print
 
 A missed or made-up line means a wrong price, so the most accurate reader won. Kimi K2.7 read receipts until October 30. Now that it is retiring, Kimi K3 takes over as the next best. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
-**Naming items and picking aisles.** The 42 item lines from the same three receipts, each labelled by hand with the aisle it belongs in. Nemotron 3 Super got 98% right. In a side-by-side, Nemotron 3.5 Lightning it named shampoo and chicken thighs both "Chicken breast", so it was out. After the October 30 change, Nemotron 3.5 Super VL got 40 of 42 (95%) on the same lines.
+**Naming items and picking aisles.** The 42 item lines from the same three receipts, each labelled by hand with the aisle it belongs in. The test sends the lines exactly as the app does and scores every aisle against the labels.
+
+| Model | Aisles right | Median time |
+| --- | --- | --- |
+| Nemotron 3 Super (Oct 16, two runs) | 82 of 84 (98%) | 3.1 s |
+| Nemotron 3.5 Super VL (Oct 30, one run) | 40 of 42 (95%) | 2.5 s |
+
+In a side-by-side on the same kind of lines, Nemotron 3.5 Lightning named shampoo and chicken thighs both "Chicken breast", so it was out. Nemotron 3 Super named items until October 30, and Nemotron 3.5 Super VL does now.
 
 **Grouping the same product across stores.** 83 pairs of product names, each marked by hand as the same product or not, run three times. Qwen 3.8 never merged two different products. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
 
