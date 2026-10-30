@@ -168,7 +168,7 @@ The one that failed: on a made-up multi-buy receipt, Kimi K2.7 misread a line. T
 
 | What I saw | What Billie does |
 | --- | --- |
-| Kimi K2.7, the main reader until October 30, was slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at the old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
+| Kimi K2.7, the main reader until October 30, was slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at the old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for a minute and photos wait, so nothing loops or keeps spending. |
 | A line is misread. | The lines are added up and checked against the printed subtotal and total. A receipt that doesn't add up is marked for the shopper to check. |
 | Text on a receipt tries to give the model orders. | Answers must match a strict schema, and attack lines are left out or flagged, never named as products. |
 | A photo is blurry, handwritten, not a receipt, or the same one twice. | A blurry photo is flagged on the phone before it is sent, with a choice to retake it. The rest are refused, and a refused photo doesn't count toward the day's receipts. |
