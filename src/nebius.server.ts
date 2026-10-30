@@ -127,6 +127,8 @@ async function postWithRetry(body: object, seconds: number, path?: string) {
 	if (response.status === 429 || response.status >= 500) throw new AiUnavailable(`provider returned ${response.status}`);
 	// the account's credit is spent: like our own cap, receipts wait instead of failing
 	if (response.status === 402) throw new AiUnavailable('provider credit is spent', true);
+	// a retired model answers 404, so the backup takes over
+	if (response.status === 404) throw new AiUnavailable('model not found');
 	if (!response.ok) throw new Error(`provider rejected the request: ${response.status}`);
 	return response;
 }

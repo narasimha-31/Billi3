@@ -64,6 +64,13 @@ describe('structured', () => {
 		expect(error).not.toBeInstanceOf(AiUnavailable);
 	});
 
+	it('treats a retired model as down, so the backup can take over', async () => {
+		const fetch = vi.fn().mockResolvedValue(answer(404));
+		vi.stubGlobal('fetch', fetch);
+		await expect(call()).rejects.toBeInstanceOf(AiUnavailable);
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
 	it('treats spent provider credit as the budget running out, so receipts wait', async () => {
 		const fetch = vi.fn().mockResolvedValue(answer(402));
 		vi.stubGlobal('fetch', fetch);

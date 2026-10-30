@@ -31,8 +31,8 @@
 		<ul class="group">
 			<li><strong>10 receipt reads</strong> come with each guest session.</li>
 			<li>
-				<strong>Receipts are read by Kimi K2.7</strong> on Nebius Token Factory, with NVIDIA Nemotron 3.5 Super VL as the backup reader.
-				Nemotron 3 Super names every item.
+				<strong>Receipts are read by Kimi K3</strong> on Nebius Token Factory, with NVIDIA Nemotron 3.5 Super VL as the backup reader.
+				Nemotron 3.5 Super VL also names every item.
 			</li>
 			<li><strong>Everything is deleted</strong> three hours after you start, or as soon as you tap End session.</li>
 		</ul>

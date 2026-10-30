@@ -7,12 +7,14 @@ export const MODELS = {
 	// was faster but five times the price and glued weight lines into names; Qwen added 23 lines.
 	// Oct 28: its good reads took 4.6 s at the median but up to 18.5 s on long receipts, and every read cut at
 	// 10 s also marked it down for everyone, so it gets 20; the backup still answers within 10.
-	vision: { id: 'moonshotai/Kimi-K2.7-Code', input: 0.95, output: 4, seconds: 20 },
+	// Oct 30: K2.7 Code retires Nov 9, so K3, second in the bake-off with 125 of 129.
+	vision: { id: 'moonshotai/Kimi-K3', input: 3, output: 15, seconds: 20 },
 	// Nemotron 3.5 Super VL as the backup: 114 of 129 in the same bake-off at under a third of the price
 	visionBackup: { id: 'nvidia/Nemotron-3.5-Super-VL', input: 0.3, output: 0.9, seconds: 10 },
 	// Super over Lightning: in a side-by-side on real receipt lines Lightning merged shampoo and chicken
 	// thighs into "Chicken breast"; Super kept them apart. A wrong merge corrupts price comparisons.
-	names: { id: 'nvidia/nemotron-3-super-120b-a12b', input: 0.3, output: 0.9, seconds: 10 },
+	// Oct 30: 3 Super retires Nov 9, so the 3.5 Super VL names too
+	names: { id: 'nvidia/Nemotron-3.5-Super-VL', input: 0.3, output: 0.9, seconds: 10 },
 	// Qwen judges whether two product names are one product. Oct 16, 83 shopper-checked pairs,
 	// 30 of them held out from tuning, three runs: no wrong merge, 2 of 31 true pairs missed. Super
 	// made two wrong merges on the same pairs, and every model went wrong when a high embedding
@@ -73,7 +75,8 @@ export const GUEST_LIMIT_NOTES = {
 
 // the names people know the reading models by
 const READER_NAMES: Record<string, string> = {
-	[MODELS.vision.id]: 'Kimi K2.7',
+	[MODELS.vision.id]: 'Kimi K3',
+	'moonshotai/Kimi-K2.7-Code': 'Kimi K2.7',
 	[MODELS.visionBackup.id]: 'NVIDIA Nemotron 3.5 Super VL'
 };
 export const readerName = (id: string) => READER_NAMES[id] ?? id;

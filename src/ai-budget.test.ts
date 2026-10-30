@@ -3,8 +3,8 @@ import { DAILY_CAP_MICROS, USER_DAILY_CAP_MICROS, costMicros, overDailyCap, over
 
 describe('costMicros', () => {
 	it('prices input and output tokens separately at the catalog rate', () => {
-		// 1,000 in at $0.95/M + 200 out at $4/M = $0.00095 + $0.0008 = 1,750 micros
-		expect(costMicros('vision', { prompt_tokens: 1000, completion_tokens: 200 })).toBe(1750);
+		// 1,000 in at $3/M + 200 out at $15/M = $0.003 + $0.003 = 6,000 micros
+		expect(costMicros('vision', { prompt_tokens: 1000, completion_tokens: 200 })).toBe(6000);
 	});
 
 	it('rounds a fraction of a micro up, never down', () => {
