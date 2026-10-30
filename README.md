@@ -8,6 +8,9 @@ Open source under the MIT License. Free to use, change and share.
 > **Nebius x NVIDIA Global AI Hackathon, October 2026**
 > Track: **Best Apps and Agents**. NVIDIA Nemotron models, called at runtime through Nebius Token Factory.
 
+> [!IMPORTANT]
+> **Model change on October 30, 2026.** Nebius is retiring Kimi K2.7 Code and Nemotron 3 Super from Token Factory on November 9, 2026, during judging. So the app now reads receipts with Kimi K3 and names items with Nemotron 3.5 Super VL, which also stays the backup reader. The demo video was recorded before the change and shows the old models. Details in [the model change](#the-model-change-on-october-30).
+
 Billie reads your grocery receipts and remembers every price you paid, store by store. It shows where the same item costs less, when a price goes up, and when food you bought is recalled.
 
 **Live app:** [billi3.vercel.app](https://billi3.vercel.app). Scroll the page for the story, then press Try it live to use the app without signing in.
@@ -55,7 +58,7 @@ Judges and visitors can open a guest session from the landing page. It starts wi
 1. The photo is checked for size and sharpness before anything is spent.
 2. A vision model reads every line, the store, the date and the totals.
 3. The lines are added up and checked against the subtotal and total. A receipt that doesn't add up is marked for a quick look.
-4. NVIDIA Nemotron 3 Super turns each printed line into a plain product name and an aisle: "GV WHL MLK GAL" becomes "Whole milk, 1 gal".
+4. NVIDIA Nemotron 3.5 Super VL turns each printed line into a plain product name and an aisle: "GV WHL MLK GAL" becomes "Whole milk, 1 gal".
 5. The same product from different stores is grouped together, so prices can be compared.
 6. The photo is deleted, unless the shopper chose to keep photos. The items, prices, store and date are kept.
 
@@ -67,14 +70,13 @@ Every model call goes through Nebius Token Factory at runtime.
 
 | Model | What it does in Billie |
 | --- | --- |
-| Nemotron 3 Super | Names every receipt line and picks its aisle. Also picks healthy foods out of nutrition pages. |
-| Nemotron 3.5 Super VL | Backup receipt reader. It takes over when the main reader is slow or down, and reads a receipt a second time when the printed item count doesn't match. |
-| Kimi K2.7 | Main receipt reader (why below). |
+| Nemotron 3.5 Super VL | Names every receipt line and picks its aisle. Also picks healthy foods out of nutrition pages. And it is the backup receipt reader: it takes over when the main reader is slow or down, and reads a receipt a second time when the printed item count doesn't match. |
+| Kimi K3 | Main receipt reader (why below). |
 | Qwen3 Embedding 8B and Qwen 3.8 | Group the same product across stores, and judge close calls. |
 
-In the app's call log, Nemotron 3 Super named items 99 times with 98 good answers and a median of 1.5 seconds. Nemotron 3.5 Super VL read 47 receipts with 46 good answers and a median of 1.9 seconds.
+Before the change, in the app's call log, Nemotron 3 Super named items 99 times with 98 good answers and a median of 1.5 seconds. Nemotron 3.5 Super VL read 47 receipts with 46 good answers and a median of 1.9 seconds.
 
-### Why Kimi K2.7 reads the receipts
+### How I picked the receipt reader
 
 I picked the reader with a bake-off, not by name. I first tried 27 models from the Token Factory catalog on real receipts, then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
 
@@ -85,9 +87,17 @@ I picked the reader with a bake-off, not by name. I first tried 27 models from t
 | Nemotron 3.5 Super VL | 114 of 129 | 6 | 3.9 s |
 | Qwen 3.8 | 106 of 129 | 23 | 3.8 s |
 
-A missed or made-up line means a wrong price, so the most accurate reader won. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
+A missed or made-up line means a wrong price, so the most accurate reader won. Kimi K2.7 read receipts until October 30. Now that it is retiring, Kimi K3 takes over as the next best. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
 I did the same for grouping products. On 83 product pairs checked by hand, Qwen 3.8 never merged two different products in three runs. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
+
+## The model change on October 30
+
+On October 30, Nebius emailed that 11 serverless models leave Token Factory on November 9, 2026. Two of them ran Billie: Kimi K2.7 Code read the receipts, and Nemotron 3 Super named the items. Judging runs past that date, so I moved off both the same day, before the deadline.
+
+- **Reading:** Kimi K3, second best in my bake-off. In a run through the app's own code on October 30, 8 of its 10 reads came back with a median of 3.1 seconds. The other 2 hit the 20 second limit, and Nemotron 3.5 Super VL took over and read them.
+- **Naming:** Nemotron 3.5 Super VL. On 42 hand-checked lines from three real receipts, it picked the right aisle for 40 (95%), with a median of 2.5 seconds. Nemotron 3 Super got 98% on the same lines.
+- **A retired model no longer breaks reading.** Token Factory answers "model not found" for a model that is gone. The app now treats that like a model being down, so the backup reader takes over instead of the receipt failing.
 
 ## Where Token Factory sped me up
 
@@ -107,11 +117,11 @@ Billie has made 81 Tavily searches so far.
 
 ## Evals, failure modes and security
 
-Every number here comes from a real run on October 28, 2026, through the same code the app uses.
+Every number here comes from a real run through the same code the app uses, on October 28, 2026, and again on October 30 after the model change.
 
 ### Reading evals
 
-13 real model calls on test receipts, each checking one thing that goes wrong on real paper. 12 pass.
+13 checks with real model calls on test receipts, each one about something that goes wrong on real paper. With Kimi K3 all 13 pass. With Kimi K2.7, 12 passed.
 
 - Reads a normal receipt and keeps no card digits
 - Ignores orders printed on a receipt: "Ignore all previous instructions", a fake $999 item and a fake store name never come through
@@ -124,13 +134,13 @@ Every number here comes from a real run on October 28, 2026, through the same co
 - Reads an online order as a delivery and keeps no card digits
 - Flags a padded receipt whose lines don't add up, and rude item names
 
-The one that fails: on a made-up multi-buy receipt, Kimi K2.7 misread a line. The app's own totals check caught it, so the receipt was marked for a quick look instead of saving a wrong price. That is the check doing its job, and why it runs on every receipt.
+The one that failed: on a made-up multi-buy receipt, Kimi K2.7 misread a line. The app's own totals check caught it, so the receipt was marked for a quick look instead of saving a wrong price. That is the check doing its job, and why it runs on every receipt.
 
 ### What breaks, and what Billie does about it
 
 | What I saw | What Billie does |
 | --- | --- |
-| The main reader is slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at the old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
+| Kimi K2.7, the main reader until October 30, was slow on long receipts. Its good reads took 4.6 s at the median but up to 18.5 s, and 15 reads were cut off at the old 10 s limit. | The main reader now gets 20 s. If it fails, the backup reader gets one try within 10 s. If both just failed, reading pauses for 3 minutes and photos wait, so nothing loops or keeps spending. |
 | A line is misread. | The lines are added up and checked against the printed subtotal and total. A receipt that doesn't add up is marked for the shopper to check. |
 | Text on a receipt tries to give the model orders. | Answers must match a strict schema, and attack lines are left out or flagged, never named as products. |
 | A photo is blurry, handwritten, not a receipt, or the same one twice. | A blurry photo is flagged on the phone before it is sent, with a choice to retake it. The rest are refused, and a refused photo doesn't count toward the day's receipts. |
@@ -141,7 +151,7 @@ The one that fails: on a made-up multi-buy receipt, Kimi K2.7 misread a line. Th
 
 - **50 database security tests.** Each shopper's receipts, items, stores, photos, settings and upload counts are locked to their account in the database itself. Products are readable only through your own receipt lines. Limits live in the database too: 5 receipts a minute, 10 a day (3 on an account's first day), 100 in 30 days, JPEG photos up to 5 MB.
 - **An attack pass on the live app** with throwaway accounts. A second account could not read, change or delete another person's data through the pages, the forms or the database API. Forms posted from other sites are refused, no other site can frame the app, and signed-out visitors get nothing.
-- **295 automated tests** for the money math, receipt checks, budgets, limits and parsing, and Playwright scripts that click through the app at phone and laptop sizes.
+- **296 automated tests** for the money math, receipt checks, budgets, limits and parsing, and Playwright scripts that click through the app at phone and laptop sizes.
 
 ## Run it yourself
 
