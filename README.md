@@ -87,7 +87,7 @@ I picked the reader with a bake-off, not by name. I first sent the same three re
 | Nemotron 3.5 Super VL | 114 of 129 | 6 | 3.9 s |
 | Qwen 3.8 | 106 of 129 | 23 | 3.8 s |
 
-<details>
+<details open>
 <summary>The first round: all 27 models, one run each (43 printed lines)</summary>
 
 | Model | Printed lines found | Made-up lines | Median time |
