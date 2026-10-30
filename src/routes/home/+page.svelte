@@ -317,7 +317,7 @@
 					<h2 class="due-title" id="healthy-title">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14zM5 19l7-7" /></svg>
 						Something healthy to try
-						{#if data.diet}<button type="button" class="diet" onclick={() => (askDiet = true)}>{dietName[data.diet]}</button>{/if}
+						{#if data.diet}<button type="button" class="diet" title="Change what you eat" onclick={() => (askDiet = true)}>{dietName[data.diet]}</button>{/if}
 					</h2>
 					{#if !data.diet}
 						<p class="healthy-why">Billie finds healthy foods you don't buy yet, from nutrition sites like Harvard and the American Heart Association. First, one question.</p>
@@ -353,7 +353,15 @@
 
 				<section class="month surface" aria-labelledby="month-title">
 					<div class="month-head">
-						<h2 id="month-title" aria-live="polite">{title}</h2>
+						<div class="period">
+							<button type="button" class="step" aria-label="Earlier {by}" title="Earlier {by}" disabled={at === 0} onclick={() => (picked = at - 1)}>
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+							</button>
+							<h2 id="month-title" aria-live="polite">{title}</h2>
+							<button type="button" class="step" aria-label="Later {by}" title="Later {by}" disabled={at === bars.length - 1} onclick={() => (picked = at + 1)}>
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+							</button>
+						</div>
 						<div class="order" role="group" aria-label="Group spending by">
 							<button type="button" aria-pressed={by === 'week'} onclick={() => show('week')}>Weeks</button>
 							<button type="button" aria-pressed={by === 'month'} onclick={() => show('month')}>Months</button>
@@ -1011,9 +1019,58 @@
 
 	.month-head {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem;
+		gap: 0.5rem 0.75rem;
+	}
+
+	.period {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		min-width: 0;
+		margin-left: -0.5rem;
+	}
+
+	.step {
+		display: grid;
+		flex: none;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 50%;
+		color: var(--color-muted);
+		transition: background-color 120ms ease-out, transform 120ms ease-out;
+	}
+
+	.step svg {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.step:disabled {
+		opacity: 0.3;
+	}
+
+	.step:not(:disabled):active {
+		transform: scale(0.92);
+	}
+
+	.step:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 2px;
+	}
+
+	@media (hover: hover) {
+		.step:not(:disabled):hover {
+			background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+		}
 	}
 
 	/* the same small segmented control as the sort on Prices */
