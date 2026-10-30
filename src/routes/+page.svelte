@@ -146,7 +146,7 @@
 		<div>
 			<h2>Product</h2>
 			<a href="/demo">Try it live</a>
-			<a href="https://youtu.be/e1QKs0vzv0U" target="_blank" rel="noopener noreferrer">Watch the demo</a>
+			<a href="https://youtu.be/_3miPuMgr2o" target="_blank" rel="noopener noreferrer">Watch the demo</a>
 			<a href="https://github.com/narasimha-31/Billi3" target="_blank" rel="noopener noreferrer">Source code</a>
 			<a href="#start">Sign in</a>
 		</div>
