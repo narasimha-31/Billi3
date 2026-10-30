@@ -47,7 +47,7 @@
 		<div class="big-frame">
 			<StoreMap full {you} {pins} {selected} {onpick} {label} />
 		</div>
-		<button type="button" class="close-map" aria-label="Close the map" onclick={close}>
+		<button type="button" class="close-map" aria-label="Close the map" title="Close the map" onclick={close}>
 			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
 		</button>
 		<div class="big-bar">

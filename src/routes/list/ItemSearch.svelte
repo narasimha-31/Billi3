@@ -91,7 +91,7 @@
 			required
 		/>
 		{#if typed}
-			<button type="button" class="clear" aria-label="Clear" onmousedown={(e) => e.preventDefault()} onclick={() => (typed = '')}>
+			<button type="button" class="clear" aria-label="Clear" title="Clear" onmousedown={(e) => e.preventDefault()} onclick={() => (typed = '')}>
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8" /></svg>
 			</button>
 		{/if}

@@ -165,7 +165,7 @@
 						<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
 						<input bind:value={storeQuery} type="search" placeholder="Search stores" aria-label="Search your receipts by store" />
 						{#if storeQuery}
-							<button class="clear" aria-label="Clear the search" onclick={() => (storeQuery = '')}>
+							<button class="clear" aria-label="Clear the search" title="Clear the search" onclick={() => (storeQuery = '')}>
 								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8" /></svg>
 							</button>
 						{/if}

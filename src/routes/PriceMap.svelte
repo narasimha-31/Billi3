@@ -106,7 +106,7 @@
 			<span class="paid">{money(cents)}{point ? unitOf(point) : per}<span class="when" class:old={isOld(date)}>{` · ${date ? (isOld(date) ? `last there ${shortDay(date)}` : shortDay(date)) : 'no date'}`}</span></span>
 		</svelte:element>
 		{#if point}
-			<a class="go" href={directionsTo(point)} target="_blank" rel="noopener" aria-label="Directions to {store}">
+			<a class="go" href={directionsTo(point)} target="_blank" rel="noopener" aria-label="Directions to {store}" title="Directions to {store}">
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 12l-9 9-9-9z M9 13.5v-2a1.5 1.5 0 0 1 1.5-1.5H15m-2-2 2 2-2 2" /></svg>
 				Directions
 			</a>

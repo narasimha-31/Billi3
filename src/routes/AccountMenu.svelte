@@ -19,11 +19,10 @@
 
 <div class="account">
 	<details bind:this={menu} ontoggle={() => (menu.open ? step.opened() : step.closed())}>
-		<summary aria-label="Account menu">
+		<summary aria-label="Account menu" title="Account">
 			<span class="initial">{initial}</span>
 		</summary>
 		<div class="menu">
-			<a href="/settings">Settings</a>
 			<form method="POST" action="/?/signout" use:enhance={leaveApp}>
 				<button>Sign out</button>
 			</form>
@@ -90,7 +89,6 @@
 			0 12px 28px -10px rgb(0 0 0 / 0.35);
 	}
 
-	.menu a,
 	.menu button {
 		display: block;
 		width: 100%;
@@ -102,13 +100,11 @@
 	}
 
 	@media (hover: hover) {
-		.menu a:hover,
 		.menu button:hover {
 			background: color-mix(in srgb, var(--color-ink) 6%, transparent);
 		}
 	}
 
-	.menu a:focus-visible,
 	.menu button:focus-visible {
 		outline: 2px solid var(--color-accent);
 	}

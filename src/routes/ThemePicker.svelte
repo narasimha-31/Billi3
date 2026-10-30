@@ -38,7 +38,7 @@
 <svelte:window onclick={closeOutside} onkeydown={(e) => e.key === 'Escape' && panel?.open && (panel.open = false)} />
 
 <details class="look" bind:this={panel} ontoggle={opened}>
-	<summary aria-label="Look: light, dark and colour theme">
+	<summary aria-label="Look: light, dark and colour theme" title="Look and theme">
 		<span class="swatch current" aria-hidden="true"></span>
 	</summary>
 	<div class="panel">

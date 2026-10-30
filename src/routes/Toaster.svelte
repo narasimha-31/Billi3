@@ -64,7 +64,7 @@
 				{:else if current.action}
 					<button type="button" class="act" onclick={act}>{current.action.label}</button>
 				{/if}
-				<button type="button" class="close" aria-label="Dismiss" onclick={() => dismiss(current.id)}>
+				<button type="button" class="close" aria-label="Dismiss" title="Dismiss" onclick={() => dismiss(current.id)}>
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8" /></svg>
 				</button>
 			</div>

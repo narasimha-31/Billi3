@@ -190,7 +190,7 @@
 												<span class="row-value">{item.lowest === null ? '' : money(item.lowest) + unit(item.per)}</span>
 												<form method="POST" action="?/remove" use:enhance>
 													<input type="hidden" name="list" value={open.id} />
-													<button class="remove" name="name" value={item.name} aria-label="Remove {item.name}">
+													<button class="remove" name="name" value={item.name} aria-label="Remove {item.name}" title="Remove {item.name}">
 														<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
 													</button>
 												</form>

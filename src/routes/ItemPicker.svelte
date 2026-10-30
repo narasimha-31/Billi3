@@ -49,7 +49,7 @@
 	</svg>
 	<input bind:value={query} type="search" placeholder="Search eggs, milk, chicken" aria-label="Search an item" />
 	{#if query}
-		<button class="clear" aria-label="Clear the search" onclick={() => (query = '')}>
+		<button class="clear" aria-label="Clear the search" title="Clear the search" onclick={() => (query = '')}>
 			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8" /></svg>
 		</button>
 	{/if}

@@ -140,7 +140,7 @@
 				<h2 id="store-sheet-title">{storeName(details?.store.name ?? null) ?? 'Store'}</h2>
 				{#if details}<p class="sub">{details.store.visits} {details.store.visits === 1 ? 'receipt' : 'receipts'}{#if details.branches.length > 1} · {details.branches.length} branches you use{/if}</p>{/if}
 			</div>
-			<button type="button" class="close" aria-label="Close" onclick={() => dialog.close()}>
+			<button type="button" class="close" aria-label="Close" title="Close" onclick={() => dialog.close()}>
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" /></svg>
 			</button>
 		</header>
