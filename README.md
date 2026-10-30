@@ -78,7 +78,7 @@ Before the change, in the app's call log, Nemotron 3 Super named items 99 times 
 
 ### How I picked the receipt reader
 
-I picked the reader with a bake-off, not by name. I first tried 27 models from the Token Factory catalog on real receipts, then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
+I picked the reader with a bake-off, not by name. I first sent the same three receipts to all 27 models in the Token Factory catalog (full results below), then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
 
 | Model | Printed lines found | Made-up lines | Median time |
 | --- | --- | --- | --- |
@@ -86,6 +86,24 @@ I picked the reader with a bake-off, not by name. I first tried 27 models from t
 | Kimi K3 | 125 of 129 | 4 | 2.7 s |
 | Nemotron 3.5 Super VL | 114 of 129 | 6 | 3.9 s |
 | Qwen 3.8 | 106 of 129 | 23 | 3.8 s |
+
+<details>
+<summary>The first round: all 27 models, one run each (43 printed lines)</summary>
+
+| Model | Printed lines found | Made-up lines | Median time |
+| --- | --- | --- | --- |
+| Kimi K2.7 Code | 43 | 0 | 4.4 s |
+| Qwen 3.8 27B | 42 | 1 | 6.0 s |
+| Kimi K3 | 40 | 3 | 5.2 s |
+| Nemotron 3.5 Super VL | 38 | 2 | 4.9 s |
+| MiniMax M3 | 18 | 31 | 5.0 s |
+| GLM 5.3 Flash | 11 (one receipt read) | 0 | 9.3 s |
+| DeepSeek V4.1 Flash | 10 | 32 | 7.4 s |
+| Gemma 3 27B | 3 | 32 | 15.9 s |
+
+Kimi K2.6 answered with broken JSON every time. MiniCPM V 4.5 and Muse Spark refused the request settings. The other 16 models (Nemotron 3 Super, Nano, Ultra and Lightning, GLM 5.1 to 5.3, DeepSeek V4 Pro and Flash, Qwen3 235B, 30B and 3.5 397B, gpt-oss 120B, Hermes 4 405B and Beam) don't take images.
+
+</details>
 
 A missed or made-up line means a wrong price, so the most accurate reader won. Kimi K2.7 read receipts until October 30. Now that it is retiring, Kimi K3 takes over as the next best. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
