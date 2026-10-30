@@ -389,6 +389,7 @@
 									class:on={i === at}
 									aria-pressed={picked === i}
 									aria-label="{periodName(bar)}: {money(bar.cents)}"
+									title="See {periodName(bar)}"
 									onclick={() => (picked = picked === i ? null : i)}
 								>
 									<span class="col">
