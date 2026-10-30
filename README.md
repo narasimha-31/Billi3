@@ -62,6 +62,10 @@ Judges and visitors can open a guest session from the landing page. It starts wi
 5. The same product from different stores is grouped together, so prices can be compared.
 6. The photo is deleted, unless the shopper chose to keep photos. The items, prices, store and date are kept.
 
+A usual receipt makes 4 model calls, one after another: Kimi K3 reads it, Nemotron 3.5 Super VL names the new lines in one call, Qwen3 Embedding 8B turns names not seen before into vectors in one call, and Qwen 3.8 judges only the close pairs, 12 to a call. Lines this shopper already bought at this store keep their name with no call, and products already known are found by a plain lookup.
+
+If Kimi K3 is down or retired, Nemotron 3.5 Super VL reads the receipt straight away; if Kimi is only slow, it gets its 20 seconds first. For the next minute Kimi is skipped, so other receipts don't wait. Super VL then does both jobs, reading and naming, as two separate calls. I tested doing both in one call, and it put fewer items in the right aisle (95% against 98%), and the totals check has to run on the raw lines before anything is named.
+
 ![A receipt read line by line](screenshots/receipt-read.jpg)
 
 ## How Billie uses NVIDIA Nemotron
