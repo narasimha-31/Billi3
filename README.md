@@ -76,21 +76,13 @@ Every model call goes through Nebius Token Factory at runtime.
 
 Before the change, in the app's call log, Nemotron 3 Super named items 99 times with 98 good answers and a median of 1.5 seconds. Nemotron 3.5 Super VL read 47 receipts with 46 good answers and a median of 1.9 seconds.
 
-### How I picked the receipt reader
+### How I picked each model
 
-I picked the reader with a bake-off, not by name. I first sent the same three receipts to all 27 models in the Token Factory catalog (full results below), then ran the best four on three real, crumpled receipts, three times each (129 printed lines in total):
+Every model was tested on my own real receipts, through the app's own prompt and checks, and scored against answers I checked by hand. Each job got its own test.
 
-| Model | Printed lines found | Made-up lines | Median time |
-| --- | --- | --- | --- |
-| Kimi K2.7 | 129 of 129 | 0 | 4.5 s |
-| Kimi K3 | 125 of 129 | 4 | 2.7 s |
-| Nemotron 3.5 Super VL | 114 of 129 | 6 | 3.9 s |
-| Qwen 3.8 | 106 of 129 | 23 | 3.8 s |
+**Reading the receipt.** Three real, crumpled receipts (Fiesta, Parivar and H-E-B, 43 printed lines) plus a meme and a handwritten bill that should be refused. The test script sends them to every model in the Token Factory catalog, 27 at the time. 16 of them only take text and are turned away before any cost, so 11 really competed. Kimi K2.6 answered with broken JSON every time, and MiniCPM V 4.5 and Muse Spark refused the request settings. The other 8 read the receipts:
 
-<details open>
-<summary>The first round: all 27 models, one run each (43 printed lines)</summary>
-
-| Model | Printed lines found | Made-up lines | Median time |
+| Model | Printed lines found (of 43) | Made-up lines | Median time |
 | --- | --- | --- | --- |
 | Kimi K2.7 Code | 43 | 0 | 4.4 s |
 | Qwen 3.8 27B | 42 | 1 | 6.0 s |
@@ -100,31 +92,21 @@ I picked the reader with a bake-off, not by name. I first sent the same three re
 | GLM 5.3 Flash | 11 (read 1 of the 3, broken JSON on the others) | 0 | 9.3 s |
 | DeepSeek V4.1 Flash | 10 | 32 | 7.4 s |
 | Gemma 3 27B | 3 | 32 | 15.9 s |
-| Kimi K2.6 | Broken JSON every time | | |
-| MiniCPM V 4.5 | Refused the request settings | | |
-| Muse Spark | Refused the request settings | | |
-| Nemotron 3 Super | Doesn't take images | | |
-| Nemotron 3 Nano | Doesn't take images | | |
-| Nemotron 3 Ultra | Doesn't take images | | |
-| Nemotron 3.5 Lightning | Doesn't take images | | |
-| GLM 5.1 | Doesn't take images | | |
-| GLM 5.2 | Doesn't take images | | |
-| GLM 5.3 | Doesn't take images | | |
-| DeepSeek V4 Pro | Doesn't take images | | |
-| DeepSeek V4 Pro 0813 | Doesn't take images | | |
-| DeepSeek V4 Flash 0731 | Doesn't take images | | |
-| Qwen3 235B | Doesn't take images | | |
-| Qwen3 30B | Doesn't take images | | |
-| Qwen 3.5 397B | Doesn't take images | | |
-| gpt-oss 120B | Doesn't take images | | |
-| Hermes 4 405B | Doesn't take images | | |
-| Beam | Doesn't take images | | |
 
-</details>
+The best four then read the same three receipts three more times each, 129 printed lines in total:
+
+| Model | Printed lines found | Made-up lines | Median time |
+| --- | --- | --- | --- |
+| Kimi K2.7 | 129 of 129 | 0 | 4.5 s |
+| Kimi K3 | 125 of 129 | 4 | 2.7 s |
+| Nemotron 3.5 Super VL | 114 of 129 | 6 | 3.9 s |
+| Qwen 3.8 | 106 of 129 | 23 | 3.8 s |
 
 A missed or made-up line means a wrong price, so the most accurate reader won. Kimi K2.7 read receipts until October 30. Now that it is retiring, Kimi K3 takes over as the next best. Nemotron 3.5 Super VL found 114 of 129 at under a third of Kimi K2.7's price, so it is the backup.
 
-I did the same for grouping products. On 83 product pairs checked by hand, Qwen 3.8 never merged two different products in three runs. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
+**Naming items and picking aisles.** The 42 item lines from the same three receipts, each labelled by hand with the aisle it belongs in. Nemotron 3 Super got 98% right. In a side-by-side, Nemotron 3.5 Lightning it named shampoo and chicken thighs both "Chicken breast", so it was out. After the October 30 change, Nemotron 3.5 Super VL got 40 of 42 (95%) on the same lines.
+
+**Grouping the same product across stores.** 83 pairs of product names, each marked by hand as the same product or not, run three times. Qwen 3.8 never merged two different products. Nemotron 3 Super merged three wrong pairs each run, "Frozen peas" with "Peas" among them. A wrong merge spoils every price comparison after it, so Qwen judges and Nemotron names.
 
 ## The model change on October 30
 
@@ -140,7 +122,7 @@ The lesson for me: an app that leans on one model should be ready for it to go. 
 
 ## Where Token Factory sped me up
 
-- **One API for every model.** Trying a new model is a one-line change, so I compared 27 vision models and 24 judge models with the same code, on the same real receipts.
+- **One API for every model.** Trying a new model is a one-line change, so I compared every model in the catalog with the same code, on the same real receipts.
 - **Real costs per call.** Every call is logged with its tokens and price. Building and testing the whole app, bake-offs included, has cost $2.67 of Token Factory credit across 960 calls, by the app's call log.
 - **Falling back is easy.** When the main reader times out, the backup is the same API with another model name, so a slow model never leaves a receipt unread.
 
