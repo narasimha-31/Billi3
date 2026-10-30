@@ -97,11 +97,11 @@ I picked the reader with a bake-off, not by name. I first sent the same three re
 | Kimi K3 | 40 | 3 | 5.2 s |
 | Nemotron 3.5 Super VL | 38 | 2 | 4.9 s |
 | MiniMax M3 | 18 | 31 | 5.0 s |
-| GLM 5.3 Flash | 11 (one receipt read) | 0 | 9.3 s |
+| GLM 5.3 Flash | 11 (read 1 of the 3, broken JSON on the others) | 0 | 9.3 s |
 | DeepSeek V4.1 Flash | 10 | 32 | 7.4 s |
 | Gemma 3 27B | 3 | 32 | 15.9 s |
 
-Kimi K2.6 answered with broken JSON every time. MiniCPM V 4.5 and Muse Spark refused the request settings. The other 16 models (Nemotron 3 Super, Nano, Ultra and Lightning, GLM 5.1 to 5.3, DeepSeek V4 Pro and Flash, Qwen3 235B, 30B and 3.5 397B, gpt-oss 120B, Hermes 4 405B and Beam) don't take images.
+Kimi K2.6 answered with broken JSON every time. MiniCPM V 4.5 and Muse Spark refused the request settings. The other 16 models (Nemotron 3 Super, Nano, Ultra and Lightning, GLM 5.1 to 5.3, DeepSeek V4 Pro (two versions) and V4 Flash 0731, Qwen3 235B, 30B and 3.5 397B, gpt-oss 120B, Hermes 4 405B and Beam) don't take images.
 
 </details>
 
