@@ -13,6 +13,7 @@
 	import { onMount } from 'svelte';
 	import { navigating, page } from '$app/state';
 	import { clearRestored, markAppStart, reloadRestored } from '../app-visit';
+	import { timeLeft } from '../format';
 	import AccountMenu from './AccountMenu.svelte';
 	import ThemePicker from './ThemePicker.svelte';
 	import Toaster from './Toaster.svelte';
@@ -26,6 +27,19 @@
 		{ href: '/prices', label: 'Prices', icon: 'M3.5 12.5 11 5h8v8l-7.5 7.5a1.5 1.5 0 0 1-2.1 0L3.5 14.6a1.5 1.5 0 0 1 0-2.1zM15.5 8.5h.01' },
 		{ href: '/list', label: 'Lists', icon: 'M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01' }
 	];
+	// the guest bar counts down, and at zero ends the session itself, even if the page is left open
+	const guestEnds = $derived(page.data.guestEnds as number | null | undefined);
+	let now = $state(Date.now());
+	let endGuest = $state<HTMLFormElement>();
+	$effect(() => {
+		if (!guestEnds) return;
+		const tick = setInterval(() => (now = Date.now()), 20_000);
+		return () => clearInterval(tick);
+	});
+	$effect(() => {
+		if (guestEnds && now >= guestEnds) endGuest?.requestSubmit();
+	});
+
 	const under = (path: string, href: string) => path === href || path.startsWith(`${href}/`);
 	// The tab follows the tap at once: while the next page's data loads, the link being opened is
 	// already the selected one, instead of nothing changing until the server answers.
@@ -139,8 +153,8 @@
 			</div>
 		</div>
 		{#if page.data.guest}
-			<form class="guest" method="POST" action="/?/endguest">
-				<span>Guest session. Everything here is deleted 3 hours after it started.</span>
+			<form class="guest" method="POST" action="/?/endguest" bind:this={endGuest}>
+				<span>Guest session. Everything here is deleted {guestEnds ? `in ${timeLeft(guestEnds - now)}` : '3 hours after it started'}.</span>
 				<button>End session</button>
 			</form>
 		{/if}

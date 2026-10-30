@@ -15,3 +15,12 @@ export const storeName = (name: string | null) =>
 	!name || /[a-z]/.test(name)
 		? name
 		: name.replace(/[A-Z'’]+/g, (word) => (word.replace(/['’]/g, '').length <= 3 ? word : word[0] + word.slice(1).toLowerCase()));
+
+// a guest's time left, in 5 minute steps until the last 10 minutes
+export function timeLeft(ms: number) {
+	if (ms < 60_000) return 'less than a minute';
+	const total = ms < 600_000 ? Math.ceil(ms / 60_000) : Math.ceil(ms / 300_000) * 5;
+	const hours = Math.floor(total / 60);
+	const minutes = total % 60;
+	return [hours && `${hours} ${hours === 1 ? 'hour' : 'hours'}`, minutes && `${minutes} min`].filter(Boolean).join(' ');
+}
