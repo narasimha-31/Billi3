@@ -100,8 +100,25 @@ I picked the reader with a bake-off, not by name. I first sent the same three re
 | GLM 5.3 Flash | 11 (read 1 of the 3, broken JSON on the others) | 0 | 9.3 s |
 | DeepSeek V4.1 Flash | 10 | 32 | 7.4 s |
 | Gemma 3 27B | 3 | 32 | 15.9 s |
-
-Kimi K2.6 answered with broken JSON every time. MiniCPM V 4.5 and Muse Spark refused the request settings. The other 16 models (Nemotron 3 Super, Nano, Ultra and Lightning, GLM 5.1 to 5.3, DeepSeek V4 Pro (two versions) and V4 Flash 0731, Qwen3 235B, 30B and 3.5 397B, gpt-oss 120B, Hermes 4 405B and Beam) don't take images.
+| Kimi K2.6 | Broken JSON every time | | |
+| MiniCPM V 4.5 | Refused the request settings | | |
+| Muse Spark | Refused the request settings | | |
+| Nemotron 3 Super | Doesn't take images | | |
+| Nemotron 3 Nano | Doesn't take images | | |
+| Nemotron 3 Ultra | Doesn't take images | | |
+| Nemotron 3.5 Lightning | Doesn't take images | | |
+| GLM 5.1 | Doesn't take images | | |
+| GLM 5.2 | Doesn't take images | | |
+| GLM 5.3 | Doesn't take images | | |
+| DeepSeek V4 Pro | Doesn't take images | | |
+| DeepSeek V4 Pro 0813 | Doesn't take images | | |
+| DeepSeek V4 Flash 0731 | Doesn't take images | | |
+| Qwen3 235B | Doesn't take images | | |
+| Qwen3 30B | Doesn't take images | | |
+| Qwen 3.5 397B | Doesn't take images | | |
+| gpt-oss 120B | Doesn't take images | | |
+| Hermes 4 405B | Doesn't take images | | |
+| Beam | Doesn't take images | | |
 
 </details>
 
